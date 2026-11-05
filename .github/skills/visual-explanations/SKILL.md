@@ -2,9 +2,9 @@
 name: visual-explanations
 description: >-
   Explain code paths and branching outcomes with compact ASCII call graphs,
-  decision trees, and Markdown tables. Use for dependency or call-path questions,
-  reviewer critiques, guard-removal what-ifs, branching preconditions,
-  fail-open/fail-closed questions, or output comparisons.
+  decision trees, Markdown tables, and sparing GitHub alert callouts. Use for
+  dependency or call-path questions, reviewer critiques, guard-removal what-ifs,
+  branching preconditions, fail-open/fail-closed questions, or output comparisons.
 ---
 
 # Visual explanations
@@ -69,7 +69,8 @@ sentence and citation. Do not turn it into a graph or table.
 4. **Present and finish.**
    Show only branches and rows that answer the question, including material early
    exits and errors. Use exact field names and units. Choose columns for input
-   state, result, error, and side effects as relevant.
+   state, result, error, and side effects as relevant. Reserve
+   [alert callouts](#alert-callouts) for decisive takeaways.
 
    Mark "not returned", "not applicable", and "unknown" explicitly rather than
    treating them as false or zero. An uninspected call is not a verified absent
@@ -96,6 +97,36 @@ Collapse irrelevant helpers and disclose omitted branches. Split complex flows
 only when useful. Avoid full Cartesian products, obligatory response sections,
 and graph/table/prose combinations that all say the same thing.
 
+## Alert callouts
+
+Use a GitHub alert to make a decisive takeaway hard to miss, not to decorate
+the answer. Many answers need none. Choose the type by the takeaway's role and
+verified consequence, not by tone:
+
+| Alert | Use for |
+| --- | --- |
+| `[!IMPORTANT]` | The verified conclusion, or a precondition the reader needs to act correctly. |
+| `[!WARNING]` | Verified current behavior that already risks harm, such as a fail-open path, forbidden side effect, or broken error contract. |
+| `[!CAUTION]` | The negative outcome of a proposed change or action, such as removing a guard. |
+| `[!NOTE]` | An evidence limit that bounds the conclusion, such as an uninspected consumer. |
+| `[!TIP]` | Rarely: a concrete check that would resolve an open question. |
+
+- Use at most three alerts per answer, never back to back. Pick the takeaways
+  that would change the reader's next decision; keep other caveats in prose or
+  rows.
+- Keep each alert to one to three lines with exact names, its evidence label,
+  and a citation. Do not escalate a hypothesis, synthetic example, or
+  test-constructible state into a verified production risk.
+- The alert replaces the sentence it highlights; do not repeat it in prose.
+- Write alerts as top-level blockquotes: `> [!TYPE]` alone on the first line,
+  then every content line prefixed with `>`. Do not nest them in lists, tables,
+  or other blockquotes, and keep ASCII graphs and tables outside them.
+- Default to alert syntax in any Markdown destination, including chat
+  responses, GitHub issues, pull requests, discussions, comments, and
+  repository Markdown files. Use a bold lead-in such as `**Warning:**`, under
+  the same limits, only where the output is plain text, such as commit
+  messages, code comments, or logs.
+
 ## Boundaries
 
 Explanation and review requests are read-only unless separately authorized.
@@ -111,7 +142,14 @@ the host's applicable procedures and approval gates.
 Prompt: "Show the request/cache mismatch branches. Does refreshing configuration
 also change the request-selected route?"
 
-Assume, only for this example, that routing is request-owned:
+Assume, only for this example, that routing is request-owned. A rendered answer
+could lead with one alert, then show the graph and table:
+
+```markdown
+> [!IMPORTANT]
+> Synthetic: refreshing changes only the loaded configuration. The
+> request-owned route stays `A`, even when the refresh returns `B`.
+```
 
 ```text
 Request.mode vs cached.mode
@@ -140,4 +178,6 @@ shape. Cite the actual implementation; the example establishes no repository fac
 | Guard-removal critique | State all preconditions and compare before/after with identical inputs. |
 | Payload comparison | Compare exact fields, scope, errors, and verified consumer behavior. |
 | Missing or contradictory evidence | State what is known and identify the precise gap. |
-| Simple property question | Give a short cited answer without a visual. |
+| Chat answer where a proposed change would fail open | Use a `[!CAUTION]` alert with the verified condition and citation; keep the graph and table outside it. |
+| Commit message or code comment with one decisive caveat | Use a bold lead-in instead of alert syntax; keep other caveats in prose. |
+| Simple property question | Give a short cited answer without a visual or alert. |

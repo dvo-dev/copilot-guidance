@@ -111,8 +111,9 @@ verified consequence, not by tone:
 | `[!NOTE]` | An evidence limit that bounds the conclusion, such as an uninspected consumer. |
 | `[!TIP]` | Rarely: a concrete check that would resolve an open question. |
 
-- Use at most two alerts per answer, never back to back. Pick the takeaway that
-  would change the reader's next decision; keep other caveats in prose or rows.
+- Use at most three alerts per answer, never back to back. Pick the takeaways
+  that would change the reader's next decision; keep other caveats in prose or
+  rows.
 - Keep each alert to one to three lines with exact names, its evidence label,
   and a citation. Do not escalate a hypothesis, synthetic example, or
   test-constructible state into a verified production risk.
@@ -120,11 +121,11 @@ verified consequence, not by tone:
 - Write alerts as top-level blockquotes: `> [!TYPE]` alone on the first line,
   then every content line prefixed with `>`. Do not nest them in lists, tables,
   or other blockquotes, and keep ASCII graphs and tables outside them.
-- Use alert syntax only where the destination is known to render it, such as
-  GitHub issues, pull requests, discussions, comments, repository Markdown
-  files, or a chat surface verified to support it. Elsewhere, including plain
-  text and unknown renderers, use a bold lead-in such as `**Warning:**` under
-  the same limits.
+- Default to alert syntax in any Markdown destination, including chat
+  responses, GitHub issues, pull requests, discussions, comments, and
+  repository Markdown files. Use a bold lead-in such as `**Warning:**`, under
+  the same limits, only where the output is plain text, such as commit
+  messages, code comments, or logs.
 
 ## Boundaries
 
@@ -177,6 +178,6 @@ shape. Cite the actual implementation; the example establishes no repository fac
 | Guard-removal critique | State all preconditions and compare before/after with identical inputs. |
 | Payload comparison | Compare exact fields, scope, errors, and verified consumer behavior. |
 | Missing or contradictory evidence | State what is known and identify the precise gap. |
-| Pull request reply where a proposed change would fail open | Use one `[!CAUTION]` alert with the verified condition and citation; keep the graph and table outside it. |
-| Plain-text answer with one decisive caveat among several | Use a bold lead-in for the decisive caveat instead of alert syntax; keep the rest in prose or rows. |
+| Chat answer where a proposed change would fail open | Use a `[!CAUTION]` alert with the verified condition and citation; keep the graph and table outside it. |
+| Commit message or code comment with one decisive caveat | Use a bold lead-in instead of alert syntax; keep other caveats in prose. |
 | Simple property question | Give a short cited answer without a visual or alert. |

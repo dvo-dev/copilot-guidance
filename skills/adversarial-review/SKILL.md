@@ -58,16 +58,19 @@ Ask for a target only when there is no change and no topic was given.
 | --- | --- | --- |
 | Reviewer effort | `high`, `xhigh`, or `max` | `xhigh` |
 
-Resolve each setting once, at the start, from the first source that sets it:
+Resolve the settings once, at the start. Each setting takes its value from the
+first of these sources that sets it:
 
 1. A value passed by the calling skill, or stated in the user's request, such
    as "adversarial review at max".
 2. The user's standing instructions, personal or for the repository.
-3. In an interactive session, when the user started this skill directly, ask
-   once with the host's question tool. First offer "Use defaults
-   (Recommended)" and "Customize". Only on "Customize", ask about each setting
-   that is still unset, one question at a time.
-4. The default.
+3. The default.
+
+Ask only when the user started this skill directly in an interactive session
+and no source before the default sets any setting. Then ask once with the
+host's question tool. First offer "Use defaults (Recommended)" and
+"Customize". Only on "Customize", ask about each setting, one question at a
+time. When some settings are set, the rest use their defaults without asking.
 
 Never ask in unattended runs, such as autopilot modes, in a subagent, when
 another skill called this one, or mid-run. Skills that call other skills

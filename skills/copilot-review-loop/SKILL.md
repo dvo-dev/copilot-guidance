@@ -300,7 +300,8 @@ If the API rejects `resolutionReason`, resolve without it.
   but do not wait for it or triage it:
   - Exit 0: record its effort and the head it covers.
   - Exit 10: a review is already pending, often an automatic review of the
-    same push. Do not wait for it; say so in the summary.
+    same push, but it may cover an older head or run at another effort. Do
+    not wait for it; step 4 flags the final head for a person to check.
   - Exit 11: request once more at the fallback level from step 3.1.
   - Any other exit: record the failure.
 
@@ -350,8 +351,11 @@ the local loop's unfixed valid findings and its escalations there too, without
 a thread link, and any fix that was committed but not pushed, with its local
 commit. When step 3.8 requested a final review, list it there as well: its
 effort, the head it covers, and that the agent did not triage it, so its
-comments need a direct read. Omit other sections that would be empty. Then
-report the PR URL, the summary comment URL, and the exit reason to the caller.
+comments need a direct read. If that request returned exit 10, list instead
+that no review was requested for the final head, and ask a person to request
+one at the configured effort if no review of that head lands. Omit other
+sections that would be empty. Then report the PR URL, the summary comment
+URL, and the exit reason to the caller.
 
 ## Stop conditions
 

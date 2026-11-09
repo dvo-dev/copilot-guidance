@@ -61,6 +61,15 @@ interactive session, a skill you start yourself asks once whether to use the
 defaults. Unattended runs, and skills called by other skills, never ask. Each
 skill passes its settings to the skills it calls.
 
+### Resuming a run
+
+The loops record each finding's progress (committed, pushed, replied,
+resolved) and any step under way in the session's own artifact folder. If your
+machine sleeps or restarts mid-run, reopen the same session and ask it to
+continue: the run picks up where it stopped, without repeating replies or
+review requests. A different session cannot see those records and starts a new
+run.
+
 Requirements:
 
 - An agent host that can launch subagents on both Anthropic and OpenAI models,

@@ -65,26 +65,10 @@ reuse the recorded settings.
 
 ## Run state and lock
 
-Keep the state in `dev-loop/<branch>/state.md` in the host's session artifact
-directory, never in the repository. It is a living log in this shape:
-
-```markdown
-# dev-loop state: <branch>
-
-- Lock: <lock path>, owner=<session>, phase=<number and name, or done>, updated=<UTC time>
-- Path: <full | light> (<reason>)
-- Base: <branch> @ <sha> · Head: <sha> · PR: <url or none>
-- Settings: reviewer effort <level>, Copilot review effort <level>, local fix cycles <N>, PR fix cycles <M>
-- Checks: <commands> · Baseline failures: <list or none>
-- Counters: local reviews <n>, local fix cycles <n>/<N>, Copilot reviews <n>, Copilot fix cycles <n>/<M>
-
-## Progress
-- [ ] 1 Intake ... 8 Handoff, one line per phase and per todo
-
-## Surprises & Discoveries
-## Decision Log
-## Outcomes
-```
+Keep the run's records as [run state](run-state.md) describes: `state.md`, the
+ledger, and the other files in `dev-loop/<branch>/` in the host's session
+artifact directory, never in the repository. plan-to-pr fills in every line
+of `state.md`, including `Lock` and `Path`.
 
 The state file is private to this session, so the lock lives where every
 session using the repository can see it: a directory inside the local git
@@ -99,9 +83,11 @@ mkdir -p "$(dirname "$lock")" && mkdir "$lock" &&
 - Before starting, take the lock. `mkdir` fails when the lock already exists;
   then read `$lock/owner`. If another session owns it, stop and ask. Never run
   two pipelines on one branch.
-- **Resume:** when this session owns the lock, read the state file, verify the
-  branch and head, then continue from the last completed phase. If there is no
-  state file yet, Intake never finished: restart it.
+- **Resume:** when this session owns the lock, resume as
+  [run state](run-state.md#resume) describes, then continue from the last
+  completed phase. If there is no state file yet, Intake never finished:
+  restart it. In phases 5 and 7, invoking the loop again resumes it from its
+  own records.
 - Before each commit or push, in any phase, confirm that the current branch is
   still the run's branch. If it changed, stop and ask.
 - If the pipeline stops before Handoff, leave the lock in place so that another
@@ -133,7 +119,9 @@ mkdir -p "$(dirname "$lock")" && mkdir "$lock" &&
    where the pipeline may ask about them.
 5. Discover the check commands as review-fix-loop describes. Run them once and
    record any baseline failures.
-6. Create the state file, with the resolved settings.
+6. Start the run as [run state](run-state.md#run-directory-and-run-identity)
+   describes, and create the state file with the resolved settings and both
+   loops `not started`. Progress gets one line per phase and per todo.
 
 ### 2. Plan review (full path only)
 
@@ -261,4 +249,4 @@ webhook sender", which has 4 todos.
 | Gate A stays red on a failure that the change caused | Stop with no PR and report. |
 | The local loop leaves a valid P1 at the cap | Continue. List it first under Needs human judgment in the PR body. |
 | Another session holds the lock on this branch | Stop and ask. |
-| The session restarts mid-pipeline | Resume from the last completed phase after verifying the branch and head. |
+| The session restarts mid-pipeline | Reopen the same session. Resume from the last completed phase after verifying the branch and head; a loop that was running resumes from its own records. |

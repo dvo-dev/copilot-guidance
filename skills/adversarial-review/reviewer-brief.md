@@ -80,9 +80,12 @@ Do not report:
   repository;
 - pre-existing problems.
 
-<Topic mode only (delete in other modes): Report flaws, contradictions, risks,
-missing requirements, and infeasible steps, each with a concrete scenario of
-what happens and what goes wrong.>
+<Topic mode only (delete in other modes): The target is a plan, design, or set
+of files, not a change. Read "the change" above as the target: report problems
+in it whether or not code exists yet, including problems already present in
+named files, and point to a section, step, or file instead of affected code.
+Report flaws, contradictions, risks, missing requirements, and infeasible
+steps, each with a concrete scenario of what happens and what goes wrong.>
 <Findings mode only (delete in other modes): Judge each listed finding on its
 own merits. A finding can be valid but not worth addressing. Report additional
 problems only if they are P0 or P1.>
@@ -235,6 +238,9 @@ You are an independent validator subagent.
 
 <ID, severity, title, location, and the finding text, verbatim from the
 reviewer that raised it.>
+
+<Topic mode only (delete in other modes): a "## Target" section with the
+review packet's Target section, verbatim.>
 
 ## Code
 

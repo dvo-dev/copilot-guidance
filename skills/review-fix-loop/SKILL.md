@@ -67,7 +67,9 @@ changed areas first, then the full unit suite.
   - Never stash, reset, or check out over the working tree to do this.
   - Record confirmed baseline failures. They are reported, not fixed.
 - Fix failures that the change caused before any review; a red gate wastes
-  reviewer effort.
+  reviewer effort. Once the gate is green, commit those repairs, and any
+  uncommitted repairs the run inherited, such as Gate A's in pipeline mode, by
+  explicit path as `Fix gate failures`. Then record the new head.
 - If the repository has no unit tests, run the strongest checks available and
   say so in the report.
 - Use the repository's documented tooling. Do not install new tools for the

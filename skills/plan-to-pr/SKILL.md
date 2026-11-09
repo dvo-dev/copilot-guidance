@@ -94,12 +94,14 @@ mkdir -p "$(dirname "$lock")" && mkdir "$lock" &&
    - **Full:** anything else, or any doubt.
 3. Run preflight:
    - The current branch is a feature branch, not the default branch.
+   - Take the lock, or confirm that this session owns it, as "Run state and
+     lock" describes, before running anything else.
    - `git status --porcelain` is clean. Stop and ask about any pre-existing
      modified or untracked path.
    - The remote exists and `gh auth status` succeeds.
 4. Discover the check commands as review-fix-loop describes. Run them once and
    record any baseline failures.
-5. Create the state file and take the lock.
+5. Create the state file.
 
 ### 2. Plan review (full path only)
 
@@ -142,10 +144,9 @@ Run [review-fix-loop](../review-fix-loop/SKILL.md) in pipeline mode.
 
 - **review-fix-loop stopped on an approach-level escalation:** stop and ask.
 - **It stopped because the gate failed:** stop and report, with no PR.
-- **Otherwise:** continue. List the verified blocking leftovers first in the PR
-  body under "Needs human judgment". These are valid findings not fixed at the
-  cap, and blocking escalations. Pass them on to copilot-review-loop as
-  escalations.
+- **Otherwise:** continue. Pass every valid finding not fixed at the cap and
+  every escalation on to copilot-review-loop. They go first in the PR body
+  under "Needs human judgment", with blockers (P0 and P1) first.
 
 ### 7. Copilot review
 

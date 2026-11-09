@@ -104,8 +104,10 @@ while :; do
       fi
       ;;
     pass* | fail* | pending* | skipped*)
-      result=$(printf '%s\n' "$out" | head -n 1)
-      json=$(printf '%s\n' "$out" | sed -n 2p)
+      # Parameter expansion, not a pipe into head: a large summary would make
+      # printf die of SIGPIPE under pipefail.
+      result=${out%%$'\n'*}
+      json=${out#*$'\n'}
       case $result in
         pass | skipped)
           # Late checks can still register, so trust a result without

@@ -51,7 +51,7 @@ Requirements:
   with per-subagent model and reasoning-effort settings, such as GitHub Copilot
   CLI or the GitHub Copilot app.
 - GitHub CLI authenticated with permission to push, open pull requests, request
-  reviews, and comment.
+  reviews, comment, resolve review threads, and rerun failed workflow runs.
 - Copilot code review available for the repository. Max effort is in public
   preview. When Max is unavailable, the loop falls back to the highest
   available level and says so in its summary.

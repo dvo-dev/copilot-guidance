@@ -183,12 +183,14 @@ evidence.
 5. **Guard against bias.**
    - Agreement between slots raises priority, but it is not proof. A finding
      from one slot is not noise; model diversity exists to surface it.
-   - The parent usually wrote the code. Before rejecting a P0 or P1 finding,
-     or any finding both slots raised, launch one fresh validator with the
-     validator brief in [reviewer-brief.md](reviewer-brief.md). Use the other
-     provider's flagship at maximum effort, and give it only the finding and
-     the cited locations. If it upholds the finding, classify it as fix or
-     escalate.
+   - The parent usually wrote the code. Before rejecting a finding that you or
+     any reviewer rated P0 or P1, or any finding both slots raised, launch one
+     fresh validator with the validator brief in
+     [reviewer-brief.md](reviewer-brief.md). Use the other provider's flagship
+     at maximum effort, and give it only the finding and the cited locations,
+     plus the packet's Target section in `topic` mode. Reject only if it
+     refutes the finding. If it upholds the finding or is uncertain, classify
+     it as fix or escalate.
    - Never accept a finding only because a reviewer was confident, and never
      fix something just to appease a reviewer.
 6. **Record** each cluster in `ledger.md` as one table row:

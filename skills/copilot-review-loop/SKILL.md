@@ -113,13 +113,13 @@ cycle is left to act on it.
    - Open but not a draft: stop and report before pushing. Never push to a
      ready PR or change its draft or ready state; a person decides whether to
      convert it.
-   - Open draft: reuse it as is, and record it in `state.md`.
+   - Open draft: reuse it as is.
 2. Push without force: `git push -u origin HEAD`. If the remote rejects the
    push because it moved, stop and report. Never force-push. Add the commit to
    `Pushed by this run`.
 3. If there is no PR, open a draft PR. Use the host's PR tool if it has one; if
    not, use `gh pr create -R OWNER/REPO --draft --base <base> --head <branch> --title <title> --body-file <run-dir>/pr-body.md`.
-   Record the PR in `state.md`.
+4. Record the PR in `state.md`, whether it was reused or just opened.
 
 The PR body uses a plain, concise voice and contains:
 
@@ -345,9 +345,10 @@ If the API rejects `resolutionReason`, resolve without it.
   - Exit 0: record its effort and the head it covers in `Final review`.
   - Exit 10: a review is already pending, often an automatic review of the
     same push, but it may cover an older head or run at another effort. Do
-    not wait for it; step 4 flags the final head for a person to check.
+    not wait for it. Record in `Final review` that none was requested; step
+    4 flags the final head for a person to check.
   - Exit 11: request once more at the fallback level from step 3.1.
-  - Any other exit: record the failure.
+  - Any other exit: record the failure in `Final review`.
 
   Then check CI once without waiting, with
   `wait-checks.sh OWNER/REPO <pr> --grace 0 --timeout 0`. Checks for the
@@ -413,8 +414,9 @@ continue from the recorded step:
   with `--timeout 0`, the head, and the recorded baseline. If it finds a
   review, treat it as review k (step 3.2). If it reports
   `copilot_requested: true`, wait out the pending review with `--any`, take
-  it as review k only if its `commit` is the head, and otherwise request
-  review k (step 3.1). If neither, request it.
+  it as review k only if its `commit` is the head and its effort is the
+  Copilot review effort setting or null, and otherwise request review k
+  (step 3.1). If neither, request it.
 - `Copilot review <k>: waiting out a pending review`: wait with `--any` and
   the recorded baseline, then request review k (step 3.1).
 - `Copilot review <k>: requested`: wait with the recorded baseline, head, and

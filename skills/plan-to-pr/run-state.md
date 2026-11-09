@@ -77,10 +77,12 @@ must not run twice, from just before it starts until its result is recorded:
 - `fix cycle 2 for L2.1, L2.3, touching <paths>`. Add each path before
   changing it. Cleared when the cycle's commit is recorded, or for
   copilot-review-loop, its push.
-- `Copilot review 2: requesting for <head>`, then
+- `Copilot review 2: requesting for <head>, baseline <ID>`, then
   `Copilot review 2: requested <effort>, baseline <ID>, at <time>`, or
-  `Copilot review 2: waiting out a pending review` after an HTTP 409. Cleared
-  when the review is found and its ID is recorded.
+  `Copilot review 2: waiting out a pending review, baseline <ID>` after an
+  HTTP 409. Cleared when the review is found and its ID is recorded. The
+  final review that copilot-review-loop requests in step 3.8 is named
+  `Copilot review <k> (final)`.
 
 ## The ledger and finding progress
 
@@ -137,10 +139,15 @@ stays unresolved.
      the finding's ID, listed in `agent_replies` by copilot-review-loop's
      `review-threads.sh`.
    - `resolved`: the thread is resolved.
+   - A finished round: if the ledger has a round's rows that the loop has not
+     recorded, record them as the loop does after a round: review-fix-loop
+     updates the review count, and copilot-review-loop records
+     `review <k> triaged`.
 3. Finish the `In flight` step:
    - A round launched but not saved: run it again with fresh reviewers, using
      the saved packet if `HEAD` still matches its head, and otherwise a new
      packet. A round saved but not adjudicated: adjudicate the saved outputs.
+     Either way, then record the finished round as in step 2.
    - A fix cycle: if step 2 found its commit, record the cycle as the loop
      describes. Otherwise keep its work only if every modified or untracked
      path is on its list; if any is not, stop and ask, and never discard work.

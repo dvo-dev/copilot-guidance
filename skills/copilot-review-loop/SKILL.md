@@ -91,7 +91,6 @@ cycle is left to act on it.
 - Start, continue, or resume the run as
   [run state](../plan-to-pr/run-state.md#run-directory-and-run-identity)
   describes. When resuming, follow "Resume" below instead of this procedure.
-  Otherwise set the PR loop to `running`.
 - Not on the default branch, with at least one commit ahead of the base.
 - `git status --porcelain` is empty. If not, stop; never commit unrelated work.
 - Local gates are green, counting baseline failures as described in
@@ -100,6 +99,8 @@ cycle is left to act on it.
 - **Path check:** list `git diff --name-only <base>...HEAD`. Stop if any path
   is unexpected for the run's scope, such as a file the plan never touches, a
   secrets-like file, or a build artifact.
+- Then set the PR loop to `running`. A stop before this point leaves it
+  `not started`, so invoking the loop again repeats these checks.
 
 ## 2. Push and open the draft PR
 
@@ -112,7 +113,7 @@ cycle is left to act on it.
    - Open but not a draft: stop and report before pushing. Never push to a
      ready PR or change its draft or ready state; a person decides whether to
      convert it.
-   - Open draft: reuse it as is.
+   - Open draft: reuse it as is, and record it in `state.md`.
 2. Push without force: `git push -u origin HEAD`. If the remote rejects the
    push because it moved, stop and report. Never force-push. Add the commit to
    `Pushed by this run`.
@@ -140,9 +141,15 @@ one final review without waiting for it.
 
 ### 3.1 Request a review
 
-First run the head check against local `HEAD`, and set `In flight` to
-`Copilot review <k>: requesting for <head>`. Then run it with the Copilot
-review effort setting:
+First run the head check against local `HEAD`. Read the newest review's ID on
+the PR, or 0 if there is none, and set `In flight` to
+`Copilot review <k>: requesting for <head>, baseline <ID>`:
+
+```bash
+gh api repos/OWNER/REPO/pulls/<pr>/reviews --paginate --jq '.[].id' | sort -n | tail -1
+```
+
+Then request the review with the Copilot review effort setting:
 
 ```bash
 bash <skill-dir>/scripts/request-review.sh OWNER/REPO <pr> <copilot-effort>
@@ -156,7 +163,7 @@ Otherwise act on the exit code:
 | Exit | Meaning | Action |
 | --- | --- | --- |
 | 0 | Requested (HTTP 201) | Wait for the review (step 3.2). |
-| 10 | Another Copilot review is pending (HTTP 409), possibly for an older head or a different effort | Set `In flight` to `Copilot review <k>: waiting out a pending review`. Wait it out with `wait-review.sh --any`, in slices as in step 3.2, then request again. The pending review never counts as review k. |
+| 10 | Another Copilot review is pending (HTTP 409), possibly for an older head or a different effort | Set `In flight` to `Copilot review <k>: waiting out a pending review, baseline <ID>`, with the output's baseline. Wait it out with `wait-review.sh --any`, in slices as in step 3.2, then request again. The pending review never counts as review k. |
 | 11 | The requested effort is unavailable (HTTP 422 `INVALID_REVIEW_EFFORT`) | Request again at the highest level listed in `message` that is not above the setting, ranked MAX, then BALANCED, then LITE, and never AUTO. If none is listed, use the lowest listed level. That level becomes this review's requested effort. Flag the change in the summary. |
 | 12 | Denied: not eligible, no quota, forbidden, or not found | Stop, and post the summary. |
 | 13 | Rate limited or unavailable after the script's retries | Stop, and post the summary. |
@@ -333,7 +340,8 @@ If the API rejects `resolutionReason`, resolve without it.
 
 - Fixes were pushed and k is less than N: request review k+1 (step 3.1).
 - Fixes were pushed in fix cycle N: request the final review as in step 3.1,
-  but do not wait for it or triage it:
+  naming it `Copilot review <k> (final)` in `In flight`, but do not wait for
+  it or triage it:
   - Exit 0: record its effort and the head it covers in `Final review`.
   - Exit 10: a review is already pending, often an automatic review of the
     same push, but it may cover an older head or run at another effort. Do
@@ -396,14 +404,19 @@ open draft, run the head check against local `HEAD` or the last commit in
 conditions". Then follow [run state](../plan-to-pr/run-state.md#resume), and
 continue from the recorded step:
 
+- `Copilot review <k> (final)`: never wait for it or triage it. If its
+  result is not recorded, run `wait-review.sh` once with `--timeout 0`, the
+  head, and the recorded baseline. Record `Final review` if that finds a
+  review or reports `copilot_requested: true`; otherwise request it once.
+  Then finish step 3.8.
 - `Copilot review <k>: requesting`, with no result: run `wait-review.sh` once
-  with `--timeout 0`, the head, and the last Copilot review's ID as the
-  baseline, or 0 if there is none. If it finds a review, treat it as review k
-  (step 3.2). If it reports `copilot_requested: true`, wait out the pending
-  review with `--any`, take it as review k only if its `commit` is the head,
-  and otherwise request review k (step 3.1). If neither, request it.
-- `Copilot review <k>: waiting out a pending review`: wait with `--any`, then
-  request review k (step 3.1).
+  with `--timeout 0`, the head, and the recorded baseline. If it finds a
+  review, treat it as review k (step 3.2). If it reports
+  `copilot_requested: true`, wait out the pending review with `--any`, take
+  it as review k only if its `commit` is the head, and otherwise request
+  review k (step 3.1). If neither, request it.
+- `Copilot review <k>: waiting out a pending review`: wait with `--any` and
+  the recorded baseline, then request review k (step 3.1).
 - `Copilot review <k>: requested`: wait with the recorded baseline, head, and
   effort (step 3.2).
 - `Final review` recorded: go to step 4.
@@ -411,8 +424,9 @@ continue from the recorded step:
   Otherwise continue the latest review at its first step not recorded in
   Progress: the CI wait and head check (step 3.2), collection and triage
   (steps 3.3 and 3.4), CI classification (step 3.5), the fix cycle (step 3.6)
-  while fix items are `open` and cycles remain, replies (step 3.7) for
-  findings short of their last step, then step 3.8.
+  while fix items are `open` or failures that step 3.5 classified for fixing
+  remain, and cycles remain, replies (step 3.7) for findings short of their
+  last step, then step 3.8.
 
 ## Script reference
 

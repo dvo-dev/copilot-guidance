@@ -63,7 +63,6 @@ after fix cycle N is the confirmation review.
 - Start, continue, or resume the run as
   [run state](../plan-to-pr/run-state.md#run-directory-and-run-identity)
   describes. When resuming, follow "Resume" below instead of this procedure.
-  Otherwise set the local loop to `running`.
 - Stop if the current branch is the default branch, or if there is no change.
 - Inspect `git status --porcelain`:
   - **Pipeline:** the tree may contain only changes this run made. If any
@@ -75,7 +74,9 @@ after fix cycle N is the confirmation review.
     that differs from the change.
 - Stage explicit paths only. Never use `git add -A`, `git add .`, or
   `git commit -a`.
-- Record the base SHA, head SHA, and check commands in `state.md`.
+- Record the base SHA, head SHA, and check commands in `state.md`, then set
+  the local loop to `running`. A stop before this point leaves the loop
+  `not started`, so invoking it again repeats the preflight.
 
 ## 2. Gate: deterministic checks
 

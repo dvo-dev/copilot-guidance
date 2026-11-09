@@ -2,20 +2,22 @@
 name: copilot-review-loop
 description: >-
   Open or reuse a draft pull request for the current branch and iterate with
-  GitHub Copilot code review at Max effort. Requests a Max review for every
-  pushed revision, waits for it and for CI, triages each review's findings with
-  adversarial-review, fixes and pushes what is worth fixing, and replies to and
-  resolves review threads. Stops after at most three fix cycles. Always
-  finishes with a pull request comment telling human reviewers what was
-  addressed, what was not, and what needs their judgment. Use when asked to
-  open a draft PR and iterate with Copilot review, or when plan-to-pr reaches
-  its pull request phase. Never merges the PR or marks it ready.
+  GitHub Copilot code review, at Max effort by default or Balanced. Requests a
+  review for every pushed revision, waits for it and for CI, triages each
+  review's findings with adversarial-review, fixes and pushes what is worth
+  fixing, and replies to and resolves review threads. Runs up to the
+  configured number of fix cycles (1 to 3, default 3); the review of the final
+  push is requested but not awaited. Always finishes with a pull request
+  comment telling human reviewers what was addressed, what was not, and what
+  needs their judgment. Use when asked to open a draft PR and iterate with
+  Copilot review, or when plan-to-pr reaches its pull request phase. Never
+  merges the PR or marks it ready.
 ---
 
 # Copilot review loop
 
-Use Copilot code review at Max effort as an external reviewer for every
-revision of a draft pull request (PR). Before anything changes, two independent
+Use Copilot code review as an external reviewer for every revision of a draft
+pull request (PR). Before anything changes, two independent
 peer reviewers judge which Copilot findings are worth addressing. Each finding
 gets a reply and a resolution stamp, or stays open for people. The loop ends
 with a handover comment so a human can make the final call quickly.
@@ -50,6 +52,22 @@ reference" for exit codes. Exit 2 from any script is an error, such as a
 network failure: run the same command once more, and if it exits 2 again,
 stop and post the summary.
 
+## Settings
+
+| Setting | Values | Default |
+| --- | --- | --- |
+| Copilot review effort | `max` or `balanced`; "medium" means `balanced` | `max` |
+| Fix cycles | 1, 2, or 3 | 3 |
+| Reviewer effort | `high`, `xhigh`, or `max`, passed to adversarial-review for triage | `xhigh` |
+
+Resolve them as [adversarial-review](../adversarial-review/SKILL.md#settings)
+describes; in pipeline runs, plan-to-pr passes them. Record them in `state.md`,
+and in the PR body when this run opens the PR. A reused PR's body is not
+edited, so the summary comment carries them. With N fix cycles, the loop waits
+for and triages at most N reviews. After fix cycle N is pushed, it requests
+one more review of the final revision but does not wait for it, because no fix
+cycle is left to act on it.
+
 ## 1. Preconditions
 
 - Not on the default branch, with at least one commit ahead of the base.
@@ -83,22 +101,24 @@ The PR body uses a plain, concise voice and contains:
 - A summary, then what changed and why.
 - Testing: the commands run and their results.
 - A local review summary: reviews, fix cycles, and counts.
-- How it was produced: the pipeline, reviewer models and efforts, and cycle
-  caps.
+- How it was produced: the pipeline, reviewer models, and the settings:
+  reviewer effort, Copilot review effort, and fix cycles.
 - The hidden marker `<!-- copilot-review-loop -->`.
 
 ## 3. Review cycle
 
-Repeat for review k = 1, 2, and so on, up to 4. Fix cycles are capped at 3, so
-review 4 is a confirmation review.
+Repeat for review k = 1, 2, and so on, up to N, the fix-cycle setting. Fixes
+for review k form fix cycle k. Once fix cycle N is pushed, step 3.8 requests
+one final review without waiting for it.
 
-### 3.1 Request a Max review
+### 3.1 Request a review
 
 First confirm that the PR head equals local `HEAD` with
-`gh pr view <pr> --json headRefOid`. Then run:
+`gh pr view <pr> --json headRefOid`. Then run it with the Copilot review
+effort setting:
 
 ```bash
-bash <skill-dir>/scripts/request-review.sh OWNER/REPO <pr> max
+bash <skill-dir>/scripts/request-review.sh OWNER/REPO <pr> <copilot-effort>
 ```
 
 Record `effort`, `head_sha`, and `baseline_review_id` from the output. If
@@ -109,7 +129,7 @@ and the request; stop, see "Stop conditions". Otherwise act on the exit code:
 | --- | --- | --- |
 | 0 | Requested (HTTP 201) | Wait for the review (step 3.2). |
 | 10 | Another Copilot review is pending (HTTP 409), possibly for an older head or a different effort | Wait it out with `wait-review.sh --any`, in slices as in step 3.2, then request again. The pending review never counts as review k. |
-| 11 | Max unavailable (HTTP 422 `INVALID_REVIEW_EFFORT`) | Request again at the highest level listed in `message`, ranked MAX, then BALANCED, then LITE, and never AUTO. That level becomes this review's requested effort. Flag the downgrade in the summary. |
+| 11 | The requested effort is unavailable (HTTP 422 `INVALID_REVIEW_EFFORT`) | Request again at the highest level listed in `message` that is not above the setting, ranked MAX, then BALANCED, then LITE, and never AUTO. If none is listed, use the lowest listed level. That level becomes this review's requested effort. Flag the change in the summary. |
 | 12 | Denied: not eligible, no quota, forbidden, or not found | Stop, and post the summary. |
 | 13 | Rate limited or unavailable after the script's retries | Stop, and post the summary. |
 
@@ -130,8 +150,8 @@ bash <skill-dir>/scripts/wait-review.sh OWNER/REPO <pr> <baseline_review_id> \
 bash <skill-dir>/scripts/wait-checks.sh OWNER/REPO <pr> --grace 5 --timeout 9
 ```
 
-`<effort>` is the `effort` of the request that succeeded: `max`, unless step
-3.1 fell back to a lower level.
+`<effort>` is the `effort` of the request that succeeded: the Copilot review
+effort setting, unless step 3.1 fell back to another level.
 
 - `wait-review.sh` accepts only a Copilot code review on the head commit that
   is newer than the baseline. Act on its exit code:
@@ -190,9 +210,10 @@ bash <skill-dir>/scripts/review-threads.sh OWNER/REPO <pr>
 Run [adversarial-review](../adversarial-review/SKILL.md) in `findings` mode.
 
 - Give it each finding's original Copilot text and location, never earlier
-  replies.
+  replies, and pass the reviewer effort setting.
 - Adjudicate each finding into fix, reject, defer, or escalate.
-- Do this on every review, including the confirmation review.
+- Do this on every review the loop waits for. The final review that step 3.8
+  requests is not triaged.
 - If adversarial-review reports a review failure, stop and post the summary.
 
 ### 3.5 Classify CI failures
@@ -221,10 +242,10 @@ For the failing checks on the head:
 Changes to CI workflow files are escalate-only unless the plan's scope is CI.
 Never weaken checks to get green.
 
-### 3.6 Fix cycle (fix cycles 1 to 3 only)
+### 3.6 Fix cycle
 
-Run this step when k is 3 or less and there are fix items or failures caused
-by the change:
+Run this step when there are fix items or failures caused by the change. It
+is fix cycle k, so the last one allowed is fix cycle N.
 
 1. Fix each item, highest severity first, with a failing test first when
    practical.
@@ -232,15 +253,12 @@ by the change:
 3. Commit the explicit paths as `Address Copilot review findings (cycle <k>)`.
    The commit body lists only the finding IDs, for example
    `Findings: C1.1, C1.3`, as in
-   [review-fix-loop](../review-fix-loop/SKILL.md#5-fix-cycle-at-most-3).
+   [review-fix-loop](../review-fix-loop/SKILL.md#5-fix-cycle).
 4. Before pushing, confirm that the PR is still an open draft with
    `gh pr view <pr> --json state,isDraft`, and that no person has reviewed or
    commented since the run began. If either check fails, do not push; see
    "Stop conditions". Otherwise repeat the path check, push without force,
    and confirm that the PR head equals the new local `HEAD`.
-
-On the confirmation review (k = 4), skip this step. Its fix items become
-"valid, not fixed: fix-cycle cap reached".
 
 ### 3.7 Reply and resolve
 
@@ -254,7 +272,7 @@ resolve:
 | fix (pushed) | `Fixed in <short-sha>:` what changed, and the test | `ADDRESSED` |
 | reject | `Not changing:` the evidence, with `path:line` | `INVALID` |
 | defer | `Deferred:` the reason and the follow-up | `WONT_FIX` |
-| valid, not fixed (cap reached) | `Valid; not fixed: fix-cycle cap reached.` | Leave unresolved |
+| valid, not fixed (the run stopped first) | `Valid; not fixed:` why, such as the stop condition that applied | Leave unresolved |
 | fix (committed, not pushed) | `Valid; fixed in <short-sha> but not pushed:` why the push was held back | Leave unresolved |
 | escalate | `Needs human input:` a concrete question | Leave unresolved |
 
@@ -277,10 +295,21 @@ If the API rejects `resolutionReason`, resolve without it.
 
 ### 3.8 Next step
 
-- Fixes were pushed and k is less than 4: request review k+1 (step 3.1).
+- Fixes were pushed and k is less than N: request review k+1 (step 3.1).
+- Fixes were pushed in fix cycle N: request the final review as in step 3.1,
+  but do not wait for it or triage it:
+  - Exit 0: record its effort and the head it covers.
+  - Exit 10: a review is already pending, often an automatic review of the
+    same push. Do not wait for it; say so in the summary.
+  - Exit 11: request once more at the fallback level from step 3.1.
+  - Any other exit: record the failure.
+
+  Then check CI once without waiting, with
+  `wait-checks.sh OWNER/REPO <pr> --grace 0 --timeout 0`. Read its exit code
+  as in step 3.2, and report checks that are still pending, or not yet
+  registered, as unknown. Go to step 4.
 - Nothing was pushed: go to step 4, since there is nothing new to review.
   Report CI as a fresh check shows it: green, red, none, or unknown.
-- The confirmation review is done: go to step 4.
 
 ## 4. Final summary
 
@@ -297,7 +326,7 @@ headers:
 
 ````markdown
 <!-- copilot-review-loop:summary -->
-**Copilot review loop:** <exit reason> · reviews: <k> (<effort of each>) · fix cycles: <n>/3 · CI: <green | red | none | unknown> · head: <short-sha>
+**Copilot review loop:** <exit reason> · reviews triaged: <k> (<effort of each>) · fix cycles: <n>/<N> · peer reviewers: <reviewer effort> · CI: <green | red | none | unknown> · head: <short-sha>
 
 **Needs human judgment**
 - <ID>: <the question or blocker> ([thread](<url>))
@@ -317,12 +346,14 @@ headers:
 Always include **Needs human judgment**, writing "None" when it is empty. List
 the local loop's unfixed valid findings and its escalations there too, without
 a thread link, and any fix that was committed but not pushed, with its local
-commit. Omit other sections that would be empty. Then
+commit. When step 3.8 requested a final review, list it there as well: its
+effort, the head it covers, and that the agent did not triage it, so its
+comments need a direct read. Omit other sections that would be empty. Then
 report the PR URL, the summary comment URL, and the exit reason to the caller.
 
 ## Stop conditions
 
-- **Clean, confirmation review done, or nothing new to review:** post the
+- **Clean, final fix cycle pushed, or nothing new to review:** post the
   summary.
 - **Request failure, review failure, or timeout:** post the summary and state
   the failure.
@@ -332,7 +363,9 @@ report the PR URL, the summary comment URL, and the exit reason to the caller.
   the summary, and hand off.
 - **Someone else pushed to the branch** (the PR head moved to a commit this run
   did not push): post the summary and hand off. Do not review, fix, or push
-  on top of it.
+  on top of it. Right after this run's own push, GitHub can report the old
+  head for a few seconds, so recheck for up to a minute before concluding
+  that someone else pushed.
 - **The PR is no longer an open draft** (someone marked it ready, closed it,
   or merged it): do not push. Post the summary and hand off.
 
@@ -340,7 +373,7 @@ report the PR URL, the summary comment URL, and the exit reason to the caller.
 
 | Script | Arguments | Exit codes |
 | --- | --- | --- |
-| `request-review.sh` | `OWNER/REPO PR [lite\|balanced\|max\|auto]` | 0 requested; 10 pending; 11 effort unavailable; 12 denied; 13 rate limited or unavailable; 2 error |
+| `request-review.sh` | `OWNER/REPO PR [lite\|balanced\|medium\|max\|auto]`; `medium` means `balanced` | 0 requested; 10 pending; 11 effort unavailable; 12 denied; 13 rate limited or unavailable; 2 error |
 | `wait-review.sh` | `OWNER/REPO PR BASELINE_REVIEW_ID [--head SHA] [--effort LEVEL] [--any] [--timeout MIN] [--interval SEC]` | 0 found; 20 different effort; 21 timeout; 2 error |
 | `wait-checks.sh` | `OWNER/REPO PR [--grace MIN] [--timeout MIN] [--interval SEC]` | 0 pass; 30 fail; 31 no checks; 32 timeout; 33 all skipped; 2 error |
 | `review-threads.sh` | `OWNER/REPO PR [--all]` | 0 ok; 2 error |
@@ -389,7 +422,8 @@ sender.
 | A review requested at Max lands at BALANCED | Request Max again once, without spending a fix cycle. If it lands at BALANCED again, accept it and record the actual effort. |
 | Max is unavailable for the repository | Request again at the highest listed level, wait for a review at that level, and flag the downgrade in the summary. |
 | All findings are rejected or deferred, and CI is green | Reply to and resolve each one, then post the summary without requesting another review. |
-| The confirmation review finds a new valid P2 | Triage it, reply "Valid; not fixed: fix-cycle cap reached", leave it open, and list it under Needs human judgment. |
+| Fix cycle N is pushed | Request the final review at the configured effort, do not wait for it or triage it, check CI once, and post the summary listing that review under Needs human judgment. |
+| "Iterate with Copilot at medium, 2 cycles" | Use `balanced` and 2 fix cycles without asking: at most 2 triaged reviews, then 1 final review that is not awaited. |
 | CI fails on a flaky test | Rerun its Actions run once and wait for it. If it passes, record a flake and continue. If the same failure also occurs on base, escalate it. |
 | CI fails because a workflow needs a secret | Escalate it. Never edit the workflow to skip it. |
 | A person comments while the loop is running | Finish the current replies, post the summary, and stop. |

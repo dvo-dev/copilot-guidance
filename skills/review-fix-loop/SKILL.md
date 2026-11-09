@@ -3,8 +3,9 @@ name: review-fix-loop
 description: >-
   Harden the current code change locally before a pull request. Runs the
   repository's unit tests and fast checks first, then iterates
-  adversarial-review, verification, test-first fixes, and commits for at most
-  three fix cycles, with every fix re-reviewed by fresh reviewers. Stops early
+  adversarial-review, verification, test-first fixes, and commits for up to
+  the configured number of fix cycles (1 to 3, default 3), with every fix
+  re-reviewed by fresh reviewers. Stops early
   when a review finds nothing worth fixing, and escalates when the cap is
   reached or progress stalls. Use when asked to review and fix, harden,
   polish, or iterate on a change locally, or when plan-to-pr reaches its local
@@ -43,6 +44,18 @@ Fixes must stay within the scope the user or plan approved.
   directory. It holds `state.md`, `ledger.md`, `packets/`, and `reviews/`, and
   is shared with plan-to-pr and copilot-review-loop. Never write it into the
   repository.
+
+## Settings
+
+| Setting | Values | Default |
+| --- | --- | --- |
+| Fix cycles | 1, 2, or 3 | 3 |
+| Reviewer effort | `high`, `xhigh`, or `max`, passed to every adversarial-review call | `xhigh` |
+
+Resolve them as [adversarial-review](../adversarial-review/SKILL.md#settings)
+describes; in pipeline mode, plan-to-pr passes them. Record them in
+`state.md`. With N fix cycles, the loop runs at most N + 1 reviews: the review
+after fix cycle N is the confirmation review.
 
 ## 1. Preflight
 
@@ -109,13 +122,14 @@ Take the first case that applies:
 - **No fix items:** exit clean, and report any other escalations. If both
   slots listed the same changed file or area under `not_reviewed`, exit with
   an escalation that names it instead.
-- **Fix cycles used up (3 done):** this review was the confirmation review.
+- **Fix cycles used up (N done, where N is the fix-cycle setting):** this
+  review was the confirmation review.
   1. Adjudicate it fully, including verification.
   2. Report its fix items as "valid, not fixed: fix-cycle cap reached".
   3. Exit without fixing anything.
 - **Otherwise:** start a fix cycle.
 
-## 5. Fix cycle (at most 3)
+## 5. Fix cycle
 
 For each fix item, highest severity first:
 
@@ -149,8 +163,8 @@ Return to the caller or user:
 
 - the exit reason: clean, cap reached, escalation, gate failure, or review
   failure;
-- the reviews run and fix cycles used, and the models and efforts for each
-  round, marking any degraded rounds;
+- the settings used, the reviews run and fix cycles used, and the models and
+  efforts for each round, marking any degraded rounds;
 - the commands actually run and their results, including baseline failures;
 - counts of fixed, rejected, deferred, escalated, and valid-but-not-fixed
   findings, with blocking items (P0 or P1) first;
@@ -180,8 +194,8 @@ endpoint, and `make test` is green.
 - **Round 2:** fresh reviewers find nothing worth fixing, so the loop exits
   clean.
 
-Report: "Clean after 2 reviews and 1 fix cycle (claude-opus-5.5 max,
-gpt-6-astra max). Fixed L1.1 and L1.2; deferred L1.3. `make test` passes."
+Report: "Clean after 2 reviews and 1 of 3 fix cycles (claude-opus-5.5 xhigh,
+gpt-6-astra xhigh). Fixed L1.1 and L1.2; deferred L1.3. `make test` passes."
 
 ## Walkthrough cases
 
@@ -191,7 +205,8 @@ gpt-6-astra max). Fixed L1.1 and L1.2; deferred L1.3. `make test` passes."
 | The same test fails on the base revision | Confirm it in a temporary worktree, record it as a baseline failure, and continue. |
 | Round 2 raises a finding rejected in round 1, with no new evidence | Keep it rejected and note the recurrence. |
 | L1.1 was fixed in cycle 1 and round 2 raises it again | Investigate the fix. If it still recurs after the next fix, escalate it. |
-| The third fix cycle is done | Run the confirmation review, adjudicate it, report its fix items as valid but not fixed, and stop. |
+| The last allowed fix cycle is done, such as the second with fix cycles set to 2 | Run the confirmation review, adjudicate it, report its fix items as valid but not fixed, and stop. |
+| "Review and fix this with 1 cycle at max" | Use 1 fix cycle and reviewer effort `max` without asking, for at most 2 reviews. |
 | Reviewers show the design cannot meet the requirement | Escalate it as an approach-level problem and stop. |
 | A pipeline run finds an unrelated untracked file | Stop and ask. Never commit it. |
 | The repository has no unit tests | Run the strongest checks available and say so. |

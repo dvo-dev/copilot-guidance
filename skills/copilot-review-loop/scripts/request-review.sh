@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Request a GitHub Copilot code review at a given effort level.
 #
-# Usage: request-review.sh OWNER/REPO PR_NUMBER [lite|balanced|max|auto]
+# Usage: request-review.sh OWNER/REPO PR_NUMBER [lite|balanced|medium|max|auto]
+#
+# "medium" is an alias for "balanced".
 #
 # Prints one JSON object:
 #   {"result", "http_status", "failure_reason", "message", "effort",
@@ -25,11 +27,12 @@ die() {
   exit 2
 }
 
-[ $# -ge 2 ] || die "usage: $0 OWNER/REPO PR_NUMBER [lite|balanced|max|auto]"
+[ $# -ge 2 ] || die "usage: $0 OWNER/REPO PR_NUMBER [lite|balanced|medium|max|auto]"
 command -v gh >/dev/null 2>&1 || die "gh is required"
 repo=$1
 pr=$2
 effort=$(printf '%s' "${3:-max}" | tr '[:upper:]' '[:lower:]')
+[ "$effort" = medium ] && effort=balanced
 case $repo in */*) ;; *) die "OWNER/REPO expected, got: $repo" ;; esac
 case $pr in '' | *[!0-9]*) die "PR_NUMBER must be numeric, got: $pr" ;; esac
 case $effort in lite | balanced | max | auto) ;; *) die "unknown effort: $effort" ;; esac

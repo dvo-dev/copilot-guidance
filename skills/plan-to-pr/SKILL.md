@@ -7,7 +7,9 @@ description: >-
   a handoff in which a human makes the final call. Starts when asked to run
   plan-to-pr, the dev loop, or the code factory, and automatically when the
   top-level session that owns an approved plan begins implementing code
-  changes. Documentation-only or trivial changes take a lighter path. Not for
+  changes. Documentation-only or trivial changes take a lighter path. Passes
+  reviewer effort, Copilot review effort, and fix-cycle settings to the skills
+  it calls. Not for
   subagents, fleet workers, or a single delegated todo, and not when the user
   says to skip it, for example "without plan-to-pr".
 ---
@@ -38,6 +40,29 @@ branch.
   single delegated todo. Also not when the user or the plan says to skip the
   pipeline or not to open a PR.
 
+## Settings
+
+| Setting | Values | Default | Passed to |
+| --- | --- | --- | --- |
+| Reviewer effort | `high`, `xhigh`, or `max` | `xhigh` | Every adversarial-review call: plan review, local loop, and Copilot triage |
+| Copilot review effort | `max` or `balanced`; "medium" means `balanced` | `max` | copilot-review-loop |
+| Local fix cycles | 1, 2, or 3 | 3 | review-fix-loop |
+| PR fix cycles | 1, 2, or 3 | 3 | copilot-review-loop |
+
+A single fix-cycle value, such as "2 cycles", sets both loops; the user can
+also set them separately. Resolve the settings as
+[adversarial-review](../adversarial-review/SKILL.md#settings) describes, with
+one more source right after the user's request: a `Dev loop:` line in the
+approved plan, for example:
+
+```text
+Dev loop: reviewer effort max; Copilot effort balanced; fix cycles 2
+```
+
+Resolve them once, during Intake, and record them in the state file. Pass
+them to every skill you call, so that those skills never ask. Resumed runs
+reuse the recorded settings.
+
 ## Run state and lock
 
 Keep the state in `dev-loop/<branch>/state.md` in the host's session artifact
@@ -49,8 +74,9 @@ directory, never in the repository. It is a living log in this shape:
 - Lock: <lock path>, owner=<session>, phase=<number and name, or done>, updated=<UTC time>
 - Path: <full | light> (<reason>)
 - Base: <branch> @ <sha> · Head: <sha> · PR: <url or none>
+- Settings: reviewer effort <level>, Copilot review effort <level>, local fix cycles <N>, PR fix cycles <M>
 - Checks: <commands> · Baseline failures: <list or none>
-- Counters: local reviews <n>, local fix cycles <n>/3, Copilot reviews <n>, Copilot fix cycles <n>/3
+- Counters: local reviews <n>, local fix cycles <n>/<N>, Copilot reviews <n>, Copilot fix cycles <n>/<M>
 
 ## Progress
 - [ ] 1 Intake ... 8 Handoff, one line per phase and per todo
@@ -102,14 +128,18 @@ mkdir -p "$(dirname "$lock")" && mkdir "$lock" &&
    - `git status --porcelain` is clean. Stop and ask about any pre-existing
      modified or untracked path.
    - The remote exists and `gh auth status` succeeds.
-4. Discover the check commands as review-fix-loop describes. Run them once and
+4. Resolve the settings as [Settings](#settings) describes, including the
+   plan's `Dev loop:` line. In an interactive session, this is the only point
+   where the pipeline may ask about them.
+5. Discover the check commands as review-fix-loop describes. Run them once and
    record any baseline failures.
-5. Create the state file.
+6. Create the state file, with the resolved settings.
 
 ### 2. Plan review (full path only)
 
-Run [adversarial-review](../adversarial-review/SKILL.md) in `topic` mode, with
-the plan text inlined in the packet and finding IDs `P<round>.<n>`.
+Run [adversarial-review](../adversarial-review/SKILL.md) in `topic` mode at the
+reviewer effort, with the plan text inlined in the packet and finding IDs
+`P<round>.<n>`.
 
 - **Clarifications within scope:** update the plan, log them in the Decision
   Log, and continue.
@@ -140,12 +170,13 @@ PR and report.
 
 ### 5. Local review
 
-Run [review-fix-loop](../review-fix-loop/SKILL.md) in pipeline mode, and tell
-it which path the run is on.
+Run [review-fix-loop](../review-fix-loop/SKILL.md) in pipeline mode. Tell it
+which path the run is on, and pass the local fix cycles and the reviewer
+effort.
 
-- **Full path:** up to 3 fix cycles.
-- **Light path:** one review. Fix cycles run only for blocking findings, and
-  each fix is still re-reviewed.
+- **Full path:** up to the local fix-cycle setting.
+- **Light path:** one review. Fix cycles run only for blocking findings, never
+  beyond the setting, and each fix is still re-reviewed.
 
 ### 6. Gate B
 
@@ -161,19 +192,21 @@ it which path the run is on.
 ### 7. Copilot review
 
 Run [copilot-review-loop](../copilot-review-loop/SKILL.md) with the plan
-summary, testing results, local review summary, and Gate B leftovers.
+summary, testing results, local review summary, Gate B leftovers, and the
+Copilot review effort, PR fix cycles, and reviewer effort.
 
-- **Full path:** up to 3 fix cycles.
-- **Light path:** one review. More cycles run only for actionable findings.
+- **Full path:** up to the PR fix-cycle setting.
+- **Light path:** one review. More cycles run only for actionable findings,
+  never beyond the setting.
 
 ### 8. Handoff
 
 1. Report to the user in chat:
    - the PR link and the exit status of each phase;
    - the **Needs human judgment** list;
-   - usage counts: adversarial-review rounds with their models and efforts,
-     any degraded rounds, Copilot reviews with their actual efforts, and the
-     fix cycles used;
+   - the settings used, and usage counts: adversarial-review rounds with their
+     models and efforts, any degraded rounds, Copilot reviews with their
+     actual efforts, and the fix cycles used;
    - the run directory path.
 2. Record Outcomes in the state file, set the phase to `done`, and remove the
    lock directory.
@@ -194,7 +227,9 @@ This example describes no real system. The user approves "Add retries to the
 webhook sender", which has 4 todos.
 
 1. **Intake:** full path because it changes code. The tree is clean, and one
-   baseline failure (a flaky test that also fails on base) is recorded.
+   baseline failure (a flaky test that also fails on base) is recorded. The
+   session is interactive and no settings were given, so the pipeline asks
+   once; the user picks "Use defaults".
 2. **Plan review:** P1.1 says the plan has no maximum retry count. That is an
    in-scope clarification, so the plan and Decision Log are updated.
 3. **Implement:** 4 todos, 4 commits, with targeted tests after each.
@@ -204,15 +239,20 @@ webhook sender", which has 4 todos.
 7. **Copilot review:** draft PR #42 is clean after 2 Max reviews and 1 fix
    cycle. One escalation, C2.1, stays open.
 8. **Handoff:** "Draft PR #42 is ready for your judgment. Needs human
-   judgment: C2.1, whether retries should be configurable per endpoint. Usage:
-   4 adversarial-review rounds (claude-opus-5.5 max, gpt-6-astra max, none
-   degraded), 2 Copilot reviews at MAX, 2 fix cycles."
+   judgment: C2.1, whether retries should be configurable per endpoint.
+   Settings: defaults (reviewers xhigh, Copilot max, 3 local and 3 PR fix
+   cycles). Usage: 4 adversarial-review rounds (claude-opus-5.5 xhigh,
+   gpt-6-astra xhigh, none degraded), 2 Copilot reviews at MAX, 2 fix
+   cycles."
 
 ## Walkthrough cases
 
 | Input | Expected behavior |
 | --- | --- |
 | The user approves a plan that changes code, in the top-level session | Start automatically at Intake. |
+| The approved plan has `Dev loop: reviewer effort max; fix cycles 2` | Use `max` reviewers and 2 fix cycles for both loops, without asking. |
+| An interactive session starts the pipeline with no settings anywhere | Ask once during Intake: "Use defaults (Recommended)" or "Customize". |
+| An autopilot session starts the pipeline with no settings | Use the defaults without asking. |
 | The user says "implement it without plan-to-pr" | Do not start. Implement normally. |
 | A fleet worker receives one todo from an approved plan | Do not start. The coordinating session runs the pipeline once. |
 | The plan only edits documentation | Take the light path: no plan review, one local review, and one Copilot review unless findings need more. |

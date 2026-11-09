@@ -2,8 +2,9 @@
 name: adversarial-review
 description: >-
   Run an independent two-model adversarial review. One top Anthropic model and
-  one top OpenAI model each run at maximum reasoning effort in an isolated,
-  read-only subagent that sees only a frozen review packet, never the parent
+  one top OpenAI model each run at the selected reasoning effort (high, xhigh,
+  or max; default xhigh) in an isolated, read-only subagent that sees only a
+  frozen review packet, never the parent
   conversation or the other reviewer. Reviews the current code change by
   default, or a supplied plan, design, or question, or a batch of external
   review findings to judge which are worth addressing. The parent verifies
@@ -51,20 +52,43 @@ separate request decides what to fix.
 
 Ask for a target only when there is no change and no topic was given.
 
+## Settings
+
+| Setting | Values | Default |
+| --- | --- | --- |
+| Reviewer effort | `high`, `xhigh`, or `max` | `xhigh` |
+
+Resolve each setting once, at the start, from the first source that sets it:
+
+1. A value passed by the calling skill, or stated in the user's request, such
+   as "adversarial review at max".
+2. The user's standing instructions, personal or for the repository.
+3. In an interactive session, when the user started this skill directly, ask
+   once with the host's question tool. First offer "Use defaults
+   (Recommended)" and "Customize". Only on "Customize", ask about each setting
+   that is still unset, one question at a time.
+4. The default.
+
+Never ask in unattended runs, such as autopilot modes, in a subagent, when
+another skill called this one, or mid-run. Skills that call other skills
+resolve their own settings the same way and pass them down. Record the
+resolved values in the report.
+
 ## 1. Choose the reviewer models
 
 Use two slots from different providers.
 
-| Slot | Provider | Current default (verified 2026-11) |
+| Slot | Provider | Current default model (verified 2026-11) |
 | --- | --- | --- |
-| A | Anthropic | Claude Opus 5.5 (`claude-opus-5.5`), effort `max` |
-| B | OpenAI | GPT-6 Astra (`gpt-6-astra`), effort `max` |
+| A | Anthropic | Claude Opus 5.5 (`claude-opus-5.5`) |
+| B | OpenAI | GPT-6 Astra (`gpt-6-astra`) |
 
-- **The user requires these settings explicitly.** Each slot uses its
-  provider's most capable model at the highest reasoning effort the host
-  supports. Pass the model and effort on every launch rather than relying on
-  host defaults, even where the host's subagent policy says to omit them unless
-  the user requires them.
+- **The user requires the model and effort explicitly.** Each slot uses its
+  provider's most capable model at the reviewer effort from
+  [Settings](#settings). Pass the model and effort on every launch rather than
+  relying on host defaults, even where the host's subagent policy says to omit
+  them unless the user requires them. If a slot's model does not support that
+  effort, use the nearest level it supports and record the substitution.
 - The table is the source of truth. When the user names models, use those
   instead. Consult a provider's documentation only when its default is missing
   from the host's model catalog, or when the user asks to update the defaults.
@@ -122,7 +146,8 @@ anchors reviewers and destroys their independence.
    subagent tool. In GitHub Copilot, use the `task` tool with:
    - `agent_type: code-review` for `change` and `findings` modes, or
      `rubber-duck` for `topic` mode;
-   - `model` set to the slot's model and `reasoning_effort: max`;
+   - `model` set to the slot's model and `reasoning_effort` set to the
+     reviewer effort;
    - `mode: sync`, so that each call returns its slot's result;
    - the packet as the prompt.
 
@@ -194,7 +219,7 @@ evidence.
      any reviewer rated P0 or P1, or any finding both slots raised, launch one
      fresh validator with the validator brief in
      [reviewer-brief.md](reviewer-brief.md). Use the other provider's flagship
-     at maximum effort, and give it only the finding, the cited locations,
+     at the reviewer effort, and give it only the finding, the cited locations,
      and the packet's Target section. Reject only if it
      refutes the finding. If it upholds the finding or is uncertain, classify
      it as fix or escalate.
@@ -251,14 +276,17 @@ Ledger rows:
 | L1.1 | 1 | both | P1 | `retry.go:14` | First retry has zero delay | fix | `TestRetryDelayStartsAtBase` fails | |
 | L1.2 | 1 | B | P3 | `retry.go:9` | Rename `attempt` to `retryCount` | defer | Naming preference | |
 
-Summary line: "Round 1, dual-model (claude-opus-5.5 max, gpt-6-astra max): 1
-fix (P1), 1 defer. A: incorrect. B: incorrect."
+Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6-astra xhigh):
+1 fix (P1), 1 defer. A: incorrect. B: incorrect."
 
 ## Walkthrough cases
 
 | Input | Expected behavior |
 | --- | --- |
 | "Get a second opinion on my change" | Use `change` mode on merge base to `HEAD` plus uncommitted work, run both slots in parallel, and return the adjudicated summary. |
+| "Adversarial review at max" | Run both slots, and any validator, at `max` without asking. |
+| The user starts this skill in an interactive session without naming an effort | Ask once: "Use defaults (Recommended)" or "Customize". |
+| review-fix-loop calls this skill with reviewer effort `high` | Use `high` without asking. |
 | "Review this plan before I approve it", where the plan file lives in session state | Use `topic` mode with the plan text inlined in the packet, with no session-state paths. |
 | A loop passes five Copilot findings | Use `findings` mode with each finding's original text only, and adjudicate each verdict into a disposition. |
 | One slot returns no findings | That is a valid result. Adjudicate the other slot's findings normally. |

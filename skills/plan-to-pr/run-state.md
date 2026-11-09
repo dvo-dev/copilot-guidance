@@ -29,6 +29,7 @@ laptop, a restart, or a stopped turn, without repeating or skipping a step.
   | --- | --- |
   | Missing | Start a new run. |
   | The other loop is `running` | Stop and ask. |
+  | This is review-fix-loop and the PR loop is `done` | Start a new run. |
   | This loop is `not started` | Continue the run, for example copilot-review-loop after review-fix-loop finished in the same run, or a loop that plan-to-pr starts. |
   | This loop is `running` | Resume it, as "Resume" describes. |
   | This loop is `done` | Start a new run. |
@@ -39,7 +40,8 @@ laptop, a restart, or a stopped turn, without repeating or skipping a step.
   never go to reviewers.
 - plan-to-pr never invokes a loop that is already `done` in its own run. When
   resuming, it uses the loop's recorded exit reason and moves to the next
-  phase.
+  phase. After a gate failure or a review failure, it instead sets the loop
+  back to `not started`, clears `In flight`, and invokes it again.
 
 ## The state file
 
@@ -130,15 +132,19 @@ stays unresolved.
 1. Read `state.md` and `ledger.md`. Confirm that the current branch is the
    run's branch, and that `HEAD` is the recorded head or follows it only
    through commits this run made, such as a fix-cycle commit or a
-   `Fix gate failures` commit. Otherwise stop and ask.
-2. Record steps that happened but were not recorded:
+   `Fix gate failures` commit. When resuming a loop, also confirm that every
+   modified or untracked path is on the list of a fix cycle in flight.
+   Otherwise stop and ask.
+2. Record steps that happened but were not recorded, in order: a step counts
+   only once the finding's earlier steps are recorded.
    - `committed`: a commit after the recorded head whose body lists the
      finding ID.
    - `pushed`: after `git fetch`, the remote branch contains the commit.
    - `replied`: the thread has a reply whose marker carries this run's ID and
      the finding's ID, listed in `agent_replies` by copilot-review-loop's
      `review-threads.sh`.
-   - `resolved`: the thread is resolved.
+   - `resolved`: the thread is resolved. A thread that someone else resolved
+     before this run replied does not advance the State.
    - A finished round: if the ledger has a round's rows that the loop has not
      recorded, record them as the loop does after a round: review-fix-loop
      updates the review count, and copilot-review-loop records

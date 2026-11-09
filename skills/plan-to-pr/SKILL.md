@@ -88,7 +88,9 @@ mkdir -p "$(dirname "$lock")" && mkdir "$lock" &&
   completed phase. If there is no state file yet, Intake never finished:
   restart it. In phases 5 and 7, invoke the loop again if its status is
   `running`, so that it resumes from its own records; if it is already
-  `done`, use its recorded exit reason and move to the next phase.
+  `done`, use its recorded exit reason and move to the next phase. After a
+  gate failure or a review failure, set the loop back to `not started`, clear
+  `In flight`, and invoke it again instead.
 - Before each commit or push, in any phase, confirm that the current branch is
   still the run's branch. If it changed, stop and ask.
 - If the pipeline stops before Handoff, leave the lock in place so that another

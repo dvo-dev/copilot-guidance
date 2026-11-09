@@ -37,6 +37,9 @@ laptop, a restart, or a stopped turn, without repeating or skipping a step.
   `dev-loop/<branch>@<its run ID>/`. A new run numbers its findings from 1
   again. Earlier runs' ledgers still count as evidence when adjudicating, but
   never go to reviewers.
+- plan-to-pr never invokes a loop that is already `done` in its own run. When
+  resuming, it uses the loop's recorded exit reason and moves to the next
+  phase.
 
 ## The state file
 
@@ -75,7 +78,8 @@ must not run twice, from just before it starts until its result is recorded:
   changing it. Cleared when the cycle's commit is recorded, or for
   copilot-review-loop, its push.
 - `Copilot review 2: requesting for <head>`, then
-  `Copilot review 2: requested <effort>, baseline <ID>, at <time>`. Cleared
+  `Copilot review 2: requested <effort>, baseline <ID>, at <time>`, or
+  `Copilot review 2: waiting out a pending review` after an HTTP 409. Cleared
   when the review is found and its ID is recorded.
 
 ## The ledger and finding progress
@@ -113,8 +117,9 @@ stays unresolved.
 - Write a round's ledger rows all at once, after adjudicating every finding.
 - A fix-cycle commit lists its finding IDs in the body, as
   `Findings: L1.1, L1.3`, and a Copilot thread reply ends with
-  `<!-- copilot-review-loop:reply id=<finding-id> -->`. These identify the
-  step in git or on GitHub if the session stops before recording it.
+  `<!-- copilot-review-loop:reply run=<run ID> id=<finding-id> -->`. These
+  identify the step in git or on GitHub if the session stops before recording
+  it. A reply marker with another run's ID belongs to that run, never this one.
 - Set the loop's status to `running` when it starts, and to `done` with the
   exit reason when it reports.
 
@@ -128,16 +133,19 @@ stays unresolved.
    - `committed`: a commit after the recorded head whose body lists the
      finding ID.
    - `pushed`: after `git fetch`, the remote branch contains the commit.
-   - `replied`: the thread has the finding's reply marker, shown as
-     `agent_replied` by copilot-review-loop's `review-threads.sh`.
+   - `replied`: the thread has a reply whose marker carries this run's ID and
+     the finding's ID, listed in `agent_replies` by copilot-review-loop's
+     `review-threads.sh`.
    - `resolved`: the thread is resolved.
 3. Finish the `In flight` step:
    - A round launched but not saved: run it again with fresh reviewers, using
      the saved packet if `HEAD` still matches its head, and otherwise a new
      packet. A round saved but not adjudicated: adjudicate the saved outputs.
-   - A fix cycle: keep its work only if every modified or untracked path is on
-     its list, then run the gate and commit as the loop describes. Otherwise
-     stop and ask. Never discard work.
+   - A fix cycle: if step 2 found its commit, record the cycle as the loop
+     describes. Otherwise keep its work only if every modified or untracked
+     path is on its list; if any is not, stop and ask, and never discard work.
+     Then check each of the cycle's findings against the code, fix the ones
+     not yet fixed, and run the gate and commit as the loop describes.
    - A Copilot review request: see copilot-review-loop's "Resume".
 4. Continue as the loop's "Resume" section describes. Waits get a fresh time
    budget.

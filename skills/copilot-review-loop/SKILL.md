@@ -156,7 +156,7 @@ Otherwise act on the exit code:
 | Exit | Meaning | Action |
 | --- | --- | --- |
 | 0 | Requested (HTTP 201) | Wait for the review (step 3.2). |
-| 10 | Another Copilot review is pending (HTTP 409), possibly for an older head or a different effort | Wait it out with `wait-review.sh --any`, in slices as in step 3.2, then request again. The pending review never counts as review k. |
+| 10 | Another Copilot review is pending (HTTP 409), possibly for an older head or a different effort | Set `In flight` to `Copilot review <k>: waiting out a pending review`. Wait it out with `wait-review.sh --any`, in slices as in step 3.2, then request again. The pending review never counts as review k. |
 | 11 | The requested effort is unavailable (HTTP 422 `INVALID_REVIEW_EFFORT`) | Request again at the highest level listed in `message` that is not above the setting, ranked MAX, then BALANCED, then LITE, and never AUTO. If none is listed, use the lowest listed level. That level becomes this review's requested effort. Flag the change in the summary. |
 | 12 | Denied: not eligible, no quota, forbidden, or not found | Stop, and post the summary. |
 | 13 | Rate limited or unavailable after the script's retries | Stop, and post the summary. |
@@ -210,7 +210,8 @@ effort setting, unless step 3.1 fell back to another level.
   - 33: every check was skipped, for example by jobs that do not run on draft
     PRs; treat CI as unknown, not green.
 
-After both waits, run the head check against `head_sha`.
+After both waits, run the head check against `head_sha`, and record the
+review and the CI result in Progress.
 
 ### 3.3 Collect findings
 
@@ -238,7 +239,8 @@ Run [adversarial-review](../adversarial-review/SKILL.md) in `findings` mode.
 
 - Give it each finding's original Copilot text and location, never earlier
   replies, and pass the reviewer effort setting.
-- Adjudicate each finding into fix, reject, defer, or escalate.
+- Adjudicate each finding into fix, reject, defer, or escalate, then record
+  `review <k> triaged` in Progress.
 - Do this on every review the loop waits for. The final review that step 3.8
   requests is not triaged.
 - If adversarial-review reports a review failure, stop and post the summary.
@@ -310,7 +312,8 @@ pushed. Reply first, then resolve, and record each as it succeeds: State
 | fix (committed, not pushed) | `Valid; fixed in <short-sha> but not pushed:` why the push was held back | Leave unresolved |
 | escalate | `Needs human input:` a concrete question | Leave unresolved |
 
-End each reply with `<!-- copilot-review-loop:reply id=<finding-id> -->`. A
+End each reply with
+`<!-- copilot-review-loop:reply run=<run ID> id=<finding-id> -->`. A
 resumed run records replies and resolutions that already happened, as
 [run state](../plan-to-pr/run-state.md#resume) describes, and never posts a
 second reply.
@@ -350,49 +353,21 @@ If the API rejects `resolutionReason`, resolve without it.
 
 ## 4. Final summary
 
-Always post the summary, whatever the exit reason. Build it from the ledger,
-and write it to `<run-dir>/summary.md`, never in the repository.
+Always post the summary, whatever the exit reason. Build it from the ledger
+in the format in [summary-format.md](summary-format.md), and write it to
+`<run-dir>/summary.md`, never in the repository.
 
 - If `Summary comment` is recorded for this run, update that comment in
   place: `gh api -X PATCH repos/OWNER/REPO/issues/comments/<id> -F body=@<run-dir>/summary.md`.
-- Otherwise run `gh pr comment <pr> -R OWNER/REPO --body-file <run-dir>/summary.md`
-  and record the new comment's ID. Earlier runs' summaries stay as they are.
+- Otherwise look for a comment by you that holds this run's summary marker,
+  which a post just before an interruption leaves unrecorded:
+  `gh api repos/OWNER/REPO/issues/<pr>/comments --paginate --jq '.[] | select(.user.login == "<your login>" and (.body | contains("copilot-review-loop:summary run=<run ID> "))) | .id'`.
+  Update and record it if found. If not, run
+  `gh pr comment <pr> -R OWNER/REPO --body-file <run-dir>/summary.md` and
+  record the new comment's ID. Earlier runs' summaries stay as they are.
 
-Then set the PR loop to `done` with the exit reason.
-
-Use this format, in at most about 40 lines, with a plain voice and no emoji
-headers:
-
-````markdown
-<!-- copilot-review-loop:summary run=<run ID> -->
-**Copilot review loop:** <exit reason> · reviews triaged: <k> (<effort of each>) · fix cycles: <n>/<N> · CI: <green | red | none | unknown> · head: <short-sha>
-**Settings:** peer reviewers <model A> and <model B> at <reviewer effort> · Copilot review effort <level> · fix cycles <N>
-
-**Needs human judgment**
-- <ID>: <the question or blocker> ([thread](<url>))
-
-**Addressed**
-- <ID>: <one line> (<short-sha>)
-
-**Not addressed**
-- <ID>: <INVALID | WONT_FIX>: <one-line reason>
-
-**Residual risk / not verified**
-- <what was not tested or checked>
-
-<sub>Posted by an agent running copilot-review-loop. The PR stays a draft until a human marks it ready.</sub>
-````
-
-Always include **Needs human judgment**, writing "None" when it is empty. List
-the local loop's unfixed valid findings and its escalations there too, without
-a thread link, and any fix that was committed but not pushed, with its local
-commit. When step 3.8 requested a final review, list it there as well: its
-effort, the head it covers, and that the agent did not triage it, so its
-comments need a direct read. If that request returned exit 10, list instead
-that no review was requested for the final head, and ask a person to request
-one at the configured effort if no review of that head lands. Omit other
-sections that would be empty. Then report the PR URL, the summary comment
-URL, and the exit reason to the caller.
+Then set the PR loop to `done` with the exit reason, and report the PR URL,
+the summary comment URL, and the exit reason to the caller.
 
 ## Stop conditions
 
@@ -413,25 +388,31 @@ URL, and the exit reason to the caller.
 
 ## Resume
 
-When `state.md` shows the PR loop `running`, first confirm that the PR is
-still an open draft, run the head check against local `HEAD` or the last
-commit in `Pushed by this run`, and run the activity check. If any fails, see
-"Stop conditions". Then follow [run state](../plan-to-pr/run-state.md#resume),
-and continue from the recorded step:
+When `state.md` shows the PR loop `running` and no PR is recorded, redo step
+1's checks after its first bullet, then step 2, whose lookup finds a PR opened
+just before the interruption. Otherwise, first confirm that the PR is still an
+open draft, run the head check against local `HEAD` or the last commit in
+`Pushed by this run`, and run the activity check; if any fails, see "Stop
+conditions". Then follow [run state](../plan-to-pr/run-state.md#resume), and
+continue from the recorded step:
 
 - `Copilot review <k>: requesting`, with no result: run `wait-review.sh` once
   with `--timeout 0`, the head, and the last Copilot review's ID as the
-  baseline, or 0 if there is none. If it finds a review, or reports
-  `copilot_requested: true`, treat review k as requested and wait, as in step
-  3.2. Otherwise request it (step 3.1).
+  baseline, or 0 if there is none. If it finds a review, treat it as review k
+  (step 3.2). If it reports `copilot_requested: true`, wait out the pending
+  review with `--any`, take it as review k only if its `commit` is the head,
+  and otherwise request review k (step 3.1). If neither, request it.
+- `Copilot review <k>: waiting out a pending review`: wait with `--any`, then
+  request review k (step 3.1).
 - `Copilot review <k>: requested`: wait with the recorded baseline, head, and
   effort (step 3.2).
 - `Final review` recorded: go to step 4.
-- Nothing in flight: if no PR is recorded, start at step 2; if no review was
-  requested yet, at step 3.1. Otherwise continue the latest review at its
-  first step not yet recorded in Progress: CI classification (step 3.5), the
-  fix cycle (step 3.6) while fix items are `open` and cycles remain, replies
-  (step 3.7) for findings short of their last step, then step 3.8.
+- Nothing in flight: if no review was requested yet, start at step 3.1.
+  Otherwise continue the latest review at its first step not recorded in
+  Progress: the CI wait and head check (step 3.2), collection and triage
+  (steps 3.3 and 3.4), CI classification (step 3.5), the fix cycle (step 3.6)
+  while fix items are `open` and cycles remain, replies (step 3.7) for
+  findings short of their last step, then step 3.8.
 
 ## Script reference
 

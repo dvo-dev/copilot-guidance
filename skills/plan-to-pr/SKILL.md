@@ -86,8 +86,9 @@ mkdir -p "$(dirname "$lock")" && mkdir "$lock" &&
 - **Resume:** when this session owns the lock, resume as
   [run state](run-state.md#resume) describes, then continue from the last
   completed phase. If there is no state file yet, Intake never finished:
-  restart it. In phases 5 and 7, invoking the loop again resumes it from its
-  own records.
+  restart it. In phases 5 and 7, invoke the loop again if its status is
+  `running`, so that it resumes from its own records; if it is already
+  `done`, use its recorded exit reason and move to the next phase.
 - Before each commit or push, in any phase, confirm that the current branch is
   still the run's branch. If it changed, stop and ask.
 - If the pipeline stops before Handoff, leave the lock in place so that another

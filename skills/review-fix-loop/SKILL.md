@@ -32,7 +32,7 @@ Fixes must stay within the scope the user or plan approved.
   - **Pipeline:** [plan-to-pr](../plan-to-pr/SKILL.md) called it and supplies
     the run directory and ledger.
   - **Standalone:** anything else, such as a request from the user or from
-    another session. Keep `state.md` in plan-to-pr's shape, without the lock.
+    another session.
 - **Path (pipeline only):** full or light. On the light path, fix cycles run
   only for blocking (P0 or P1) fix items; record the other fix items as
   "valid, not fixed: light path" and report them with the cap leftovers.
@@ -40,9 +40,10 @@ Fixes must stay within the scope the user or plan approved.
   contributing guide, CI workflows, and build manifests, preferring documented
   commands. Use the repository's own environment setup, such as its virtual
   environment or pinned toolchain.
-- **Run directory:** `dev-loop/<branch>/` in the host's session artifact
-  directory. It holds `state.md`, `ledger.md`, `packets/`, and `reviews/`, and
-  is shared with plan-to-pr and copilot-review-loop. Never write it into the
+- **Run records:** `state.md`, `ledger.md`, and the other files in
+  `dev-loop/<branch>/` in the host's session artifact directory, shared with
+  plan-to-pr and copilot-review-loop and kept as
+  [run state](../plan-to-pr/run-state.md) describes. Never write them into the
   repository.
 
 ## Settings
@@ -59,6 +60,9 @@ after fix cycle N is the confirmation review.
 
 ## 1. Preflight
 
+- Start, continue, or resume the run as
+  [run state](../plan-to-pr/run-state.md#run-directory-and-run-identity)
+  describes. When resuming, follow "Resume" below instead of this procedure.
 - Stop if the current branch is the default branch, or if there is no change.
 - Inspect `git status --porcelain`:
   - **Pipeline:** the tree may contain only changes this run made. If any
@@ -70,7 +74,9 @@ after fix cycle N is the confirmation review.
     that differs from the change.
 - Stage explicit paths only. Never use `git add -A`, `git add .`, or
   `git commit -a`.
-- Record the base SHA, head SHA, and check commands in `state.md`.
+- Record the base SHA, head SHA, and check commands in `state.md`, then set
+  the local loop to `running`. A stop before this point leaves the loop
+  `not started`, so invoking it again repeats the preflight.
 
 ## 2. Gate: deterministic checks
 
@@ -103,7 +109,9 @@ changed areas first, then the full unit suite.
 ## 3. Review and adjudicate
 
 Run [adversarial-review](../adversarial-review/SKILL.md) in `change` mode on
-the base to `HEAD`, with fresh reviewers and finding IDs `L<round>.<n>`.
+the base to `HEAD`, with fresh reviewers and finding IDs `L<round>.<n>`. It
+records the round in `In flight` and writes the round's ledger rows; then
+update the review count.
 
 - Pass the intent to the reviewers. Never pass earlier rounds.
 - Adjudicate against the ledger as adversarial-review describes:
@@ -131,7 +139,9 @@ Take the first case that applies:
 
 ## 5. Fix cycle
 
-For each fix item, highest severity first:
+Set `In flight` to `fix cycle <n> for <IDs>, touching <paths>`, and add each
+path to it before changing that file. For each fix item, highest severity
+first:
 
 1. Write a failing test that reproduces it, when practical. If a test is
    impractical, for example for documentation or configuration, record why in
@@ -150,7 +160,9 @@ Then:
    commit body lists only the finding IDs, for example
    `Findings: L1.1, L1.3`. Keep finding text, dispositions, and reasons in the
    ledger, because later reviewers read the commit range.
-3. Return to step 3 for a fresh review.
+3. Record the commit: set each fixed finding's State to `committed <sha>`,
+   update `Head` and the fix-cycle count, and clear `In flight`.
+4. Return to step 3 for a fresh review.
 
 Escalate instead of spending another cycle when:
 
@@ -159,7 +171,8 @@ Escalate instead of spending another cycle when:
 
 ## 6. Report
 
-Return to the caller or user:
+Set the local loop to `done` with the exit reason, then return to the caller
+or user:
 
 - the exit reason: clean, cap reached, escalation, gate failure, or review
   failure;
@@ -169,6 +182,15 @@ Return to the caller or user:
 - counts of fixed, rejected, deferred, escalated, and valid-but-not-fixed
   findings, with blocking items (P0 or P1) first;
 - the commits created and the run directory path.
+
+## Resume
+
+When `state.md` shows the local loop `running`, follow
+[run state](../plan-to-pr/run-state.md#resume) first. It records steps that
+happened, and finishes an in-flight round or fix cycle; a finished fix cycle
+continues at step 3. With nothing in flight, run the gate (step 2). Then, if
+the review count equals the fix-cycle count, take step 3; otherwise take step
+4 for the latest round.
 
 ## Boundaries
 
@@ -209,5 +231,7 @@ gpt-6-astra xhigh). Fixed L1.1 and L1.2; deferred L1.3. `make test` passes."
 | "Review and fix this with 1 cycle at max" | Use 1 fix cycle and reviewer effort `max` without asking, for at most 2 reviews. |
 | Reviewers show the design cannot meet the requirement | Escalate it as an approach-level problem and stop. |
 | A pipeline run finds an unrelated untracked file | Stop and ask. Never commit it. |
+| The session is reopened after the machine slept during fix cycle 2, with two edited files listed in `In flight` | Keep the edits, check each of the cycle's findings and finish any not yet fixed, then run the gate, commit cycle 2, record it, and continue with a fresh review. |
+| The same loop is invoked again after it reported `done` | Rename the old run directory and start a new run with finding IDs from L1. |
 | The repository has no unit tests | Run the strongest checks available and say so. |
 | The quickest way to get green is skipping a flaky test | Do not skip it. Confirm whether it fails on base and report it. |

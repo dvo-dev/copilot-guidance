@@ -305,9 +305,11 @@ If the API rejects `resolutionReason`, resolve without it.
   - Any other exit: record the failure.
 
   Then check CI once without waiting, with
-  `wait-checks.sh OWNER/REPO <pr> --grace 0 --timeout 0`. Read its exit code
-  as in step 3.2, and report checks that are still pending, or not yet
-  registered, as unknown. Go to step 4.
+  `wait-checks.sh OWNER/REPO <pr> --grace 0 --timeout 0`. Checks for the
+  final push may not have registered yet, so never report this result as
+  green. Report CI as red if `failing` is not empty, as none when step 3.2's
+  rules say the repository has no CI, and otherwise as
+  `unknown (not awaited)` with the number of checks seen so far. Go to step 4.
 - Nothing was pushed: go to step 4, since there is nothing new to review.
   Report CI as a fresh check shows it: green, red, none, or unknown.
 

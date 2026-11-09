@@ -87,13 +87,15 @@ the base to `HEAD`, with fresh reviewers and finding IDs `L<round>.<n>`.
 
 ## 4. Decide
 
-- **No fix items:** exit clean.
+Take the first case that applies:
+
+- **Approach-level escalation:** the reviewers show that the plan or design
+  itself cannot meet the requirement. Stop and report; do not patch around it.
+- **No fix items:** exit clean, and report any other escalations.
 - **Fix cycles used up (3 done):** this review was the confirmation review.
   1. Adjudicate it fully, including verification.
   2. Report its fix items as "valid, not fixed: fix-cycle cap reached".
   3. Exit without fixing anything.
-- **Approach-level escalation:** the reviewers show that the plan or design
-  itself cannot meet the requirement. Stop and report; do not patch around it.
 - **Otherwise:** start a fix cycle.
 
 ## 5. Fix cycle (at most 3)

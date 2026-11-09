@@ -9,9 +9,13 @@
 # no check is pending, or until the timeout (default 60 minutes).
 #
 # Prints one JSON object:
-#   {"result": "pass" | "fail" | "pending", "total", "failing": [...]}
+#   {"result": "pass" | "fail" | "pending" | "skipped", "total", "skipped",
+#    "failing": [...]}
 #   {"result": "none", "total": 0, "failing": [], "workflows_present": true|false}
 # failing lists {name, workflow, state, link} for failed or cancelled checks.
+# skipped counts checks in the "skipping" bucket. "skipped" means that no check
+# passed or failed because every check was skipped, for example by a job that
+# does not run on draft pull requests; treat CI as unknown, not green.
 # For "none", workflows_present tells whether the head commit has GitHub
 # Actions workflow files; if true, treat CI as unknown, not green.
 #
@@ -20,6 +24,7 @@
 #   30  no check pending, at least one failed or was cancelled
 #   31  no checks reported after the grace period
 #   32  timed out with checks still pending
+#   33  every check was skipped
 #   2   usage or unexpected error
 set -euo pipefail
 
@@ -56,11 +61,15 @@ done
 
 # Summarize the checks as two lines: the result word, then the JSON object.
 # "pending" wins over "fail" so that every check finishes before reporting.
+# A result is "pass" only if at least one check passed; otherwise every check
+# was skipped and CI did not run.
 summary='{
     result: (if any(.[]; .bucket == "pending") then "pending"
       elif any(.[]; .bucket == "fail" or .bucket == "cancel") then "fail"
-      else "pass" end),
+      elif any(.[]; .bucket == "pass") then "pass"
+      else "skipped" end),
     total: length,
+    skipped: ([.[] | select(.bucket == "skipping")] | length),
     failing: [.[] | select(.bucket == "fail" or .bucket == "cancel")
       | {name, workflow, state, link}]
   } as $s
@@ -86,7 +95,7 @@ while :; do
         exit 31
       fi
       ;;
-    pass* | fail* | pending*)
+    pass* | fail* | pending* | skipped*)
       result=$(printf '%s\n' "$out" | head -n 1)
       json=$(printf '%s\n' "$out" | sed -n 2p)
       case $result in
@@ -97,6 +106,10 @@ while :; do
         fail)
           printf '%s\n' "$json"
           exit 30
+          ;;
+        skipped)
+          printf '%s\n' "$json"
+          exit 33
           ;;
       esac
       if [ "$SECONDS" -ge "$deadline" ]; then

@@ -21,9 +21,10 @@ Copilot code review. Finish with a handoff that lists exactly what needs human
 judgment. People steer and decide; agents execute and report.
 
 Respect the host repository's instructions, safety rules, and approval gates.
-Plan approval authorizes this pipeline's writes: commits on the feature
-branch, a push, a draft PR, review requests, thread replies and resolutions,
-and a summary comment. It authorizes nothing else. The pipeline never merges
+Plan approval authorizes this pipeline's writes: the run lock in the local git
+directory, commits on the feature branch, a push, a draft PR, review requests,
+one re-run of each failed CI run, thread replies and resolutions, and a
+summary comment. It authorizes nothing else. The pipeline never merges
 the PR, marks it ready, approves it, force-pushes, or pushes to the default
 branch.
 
@@ -45,7 +46,7 @@ directory, never in the repository. It is a living log in this shape:
 ```markdown
 # dev-loop state: <branch>
 
-- Lock: owner=<session>, phase=<number and name, or done>, updated=<UTC time>
+- Lock: <lock path>, owner=<session>, phase=<number and name, or done>, updated=<UTC time>
 - Path: <full | light> (<reason>)
 - Base: <branch> @ <sha> · Head: <sha> · PR: <url or none>
 - Checks: <commands> · Baseline failures: <list or none>
@@ -59,10 +60,23 @@ directory, never in the repository. It is a living log in this shape:
 ## Outcomes
 ```
 
-- Before starting, read the state file. If another session holds the lock and
-  the phase is not `done`, stop and ask. Never run two pipelines on one branch.
-- **Resume:** when this session holds the lock, verify the branch and head,
-  then continue from the last completed phase.
+The state file is private to this session, so the lock lives where every
+session using the repository can see it: a directory inside the local git
+directory, outside the working tree, which git does not track.
+
+```bash
+lock="$(git rev-parse --path-format=absolute --git-common-dir)/dev-loop/<branch>.lock"
+mkdir -p "$(dirname "$lock")" && mkdir "$lock" &&
+  printf 'owner=%s\nsince=%s\n' "<session>" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$lock/owner"
+```
+
+- Before starting, take the lock. `mkdir` fails when the lock already exists;
+  then read `$lock/owner`. If another session owns it, stop and ask. Never run
+  two pipelines on one branch.
+- **Resume:** when this session owns the lock, read the state file, verify the
+  branch and head, then continue from the last completed phase.
+- If the pipeline stops before Handoff, leave the lock in place so that another
+  session stops and asks instead of starting over.
 - Update Progress after every todo and phase. Record unexpected findings under
   Surprises & Discoveries, and every judgment call under Decision Log.
 
@@ -150,7 +164,8 @@ summary, testing results, local review summary, and Gate B leftovers.
      any degraded rounds, Copilot reviews with their actual efforts, and the
      fix cycles used;
    - the run directory path.
-2. Record Outcomes in the state file and set the lock's phase to `done`.
+2. Record Outcomes in the state file, set the phase to `done`, and remove the
+   lock directory.
 3. Stop. The human decides whether the PR is ready and when to merge it.
 
 ## Boundaries

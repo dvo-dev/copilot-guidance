@@ -230,7 +230,7 @@ gpt-6-astra xhigh). Fixed L1.1 and L1.2; deferred L1.3. `make test` passes."
 | "Review and fix this with 1 cycle at max" | Use 1 fix cycle and reviewer effort `max` without asking, for at most 2 reviews. |
 | Reviewers show the design cannot meet the requirement | Escalate it as an approach-level problem and stop. |
 | A pipeline run finds an unrelated untracked file | Stop and ask. Never commit it. |
-| The session is reopened after the machine slept during fix cycle 2, with two edited files listed in `In flight` | Keep the edits, run the gate, commit cycle 2, record it, and continue with a fresh review. |
+| The session is reopened after the machine slept during fix cycle 2, with two edited files listed in `In flight` | Keep the edits, check each of the cycle's findings and finish any not yet fixed, then run the gate, commit cycle 2, record it, and continue with a fresh review. |
 | The same loop is invoked again after it reported `done` | Rename the old run directory and start a new run with finding IDs from L1. |
 | The repository has no unit tests | Run the strongest checks available and say so. |
 | The quickest way to get green is skipping a flaky test | Do not skip it. Confirm whether it fails on base and report it. |

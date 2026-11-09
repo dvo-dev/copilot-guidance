@@ -35,7 +35,7 @@ Run it only when the user asked for it or plan-to-pr invoked it.
   `C<review>.<n>`.
 - **Pipeline context (optional):** from plan-to-pr, the plan summary, testing
   done, the local review summary, and the local loop's leftovers: valid
-  findings not fixed at its cap, and escalations.
+  findings it left unfixed, and escalations.
 - **Requirements:**
   - `gh` is authenticated with permission to push, create PRs, request reviews,
     comment, resolve threads, and rerun failed workflow runs.
@@ -77,9 +77,9 @@ stop and post the summary.
 
 The PR body uses a plain, concise voice and contains:
 
-- **Needs human judgment** first, when the local loop left valid findings not
-  fixed at its cap or escalations, whether passed in by plan-to-pr or found in
-  the shared ledger. List blockers (P0 and P1) first.
+- **Needs human judgment** first, when the local loop left valid findings
+  unfixed or escalations, whether passed in by plan-to-pr or found in the
+  shared ledger. List blockers (P0 and P1) first.
 - A summary, then what changed and why.
 - Testing: the commands run and their results.
 - A local review summary: reviews, fix cycles, and counts.
@@ -143,7 +143,8 @@ bash <skill-dir>/scripts/wait-checks.sh OWNER/REPO <pr> --grace 5 --timeout 9
   - 21: the slice timed out. Repeat it. After about 60 minutes in total, stop
     iterating and post the summary.
 - `wait-checks.sh` waits for checks to register and finish:
-  - 0 or 30: CI passed or failed.
+  - 0 or 30: CI passed or failed. On exit 0 with `skipped` above 0, report CI
+    as green with the count, for example `green (2 skipped)`.
   - 31 with `workflows_present: true`: CI state is unknown, not green.
   - 31 with `workflows_present: false`: no checks and no GitHub Actions
     workflows. Report CI as none only if the base branch's latest commit has
@@ -153,7 +154,9 @@ bash <skill-dir>/scripts/wait-checks.sh OWNER/REPO <pr> --grace 5 --timeout 9
     otherwise CI from another provider may not have reported yet, so treat CI
     as unknown.
   - 32: the slice timed out with checks pending. Repeat it. After about 60
-    minutes in total, treat CI as unknown.
+    minutes in total, if `failing` is not empty, report CI as red and classify
+    those failures in step 3.5, noting the checks still pending; otherwise
+    treat CI as unknown.
   - 33: every check was skipped, for example by jobs that do not run on draft
     PRs; treat CI as unknown, not green.
 
@@ -179,8 +182,8 @@ bash <skill-dir>/scripts/review-threads.sh OWNER/REPO <pr>
 - **Done-clean:** no unadjudicated findings among everything collected,
   whichever review raised it, and a fresh check of the current head shows no
   failing check. Go to step 4. Report CI as
-  green; as none when the repository has no CI; or as unknown when checks
-  were skipped, missing, or still pending.
+  green; as none when the repository has no CI; or as unknown when every check
+  was skipped, or checks are missing or still pending.
 
 ### 3.4 Triage with peer review
 
@@ -252,6 +255,7 @@ resolve:
 | reject | `Not changing:` the evidence, with `path:line` | `INVALID` |
 | defer | `Deferred:` the reason and the follow-up | `WONT_FIX` |
 | valid, not fixed (cap reached) | `Valid; not fixed: fix-cycle cap reached.` | Leave unresolved |
+| fix (committed, not pushed) | `Valid; fixed in <short-sha> but not pushed:` why the push was held back | Leave unresolved |
 | escalate | `Needs human input:` a concrete question | Leave unresolved |
 
 End each reply with `<!-- copilot-review-loop:reply id=<finding-id> -->`. When
@@ -311,8 +315,9 @@ headers:
 ````
 
 Always include **Needs human judgment**, writing "None" when it is empty. List
-the local loop's valid findings not fixed at its cap and its escalations there
-too, without a thread link. Omit other sections that would be empty. Then
+the local loop's unfixed valid findings and its escalations there too, without
+a thread link, and any fix that was committed but not pushed, with its local
+commit. Omit other sections that would be empty. Then
 report the PR URL, the summary comment URL, and the exit reason to the caller.
 
 ## Stop conditions

@@ -7,7 +7,8 @@
 #   {"result", "http_status", "failure_reason", "message", "effort",
 #    "requested_at", "head_sha", "baseline_review_id"}
 # baseline_review_id is the newest review on the pull request before this
-# request. Pass it to wait-review.sh so that older reviews are ignored.
+# request. Pass it to wait-review.sh so that older reviews are ignored. When no
+# HTTP response arrived (http_status 0), message holds gh's error output.
 #
 # Exit codes:
 #   0   requested (HTTP 201)
@@ -66,11 +67,15 @@ baseline=${snapshot##* }
 case $baseline in '' | *[!0-9]*) baseline=0 ;; esac
 
 # Request the review. Retry twice on rate limiting or service unavailability.
+# gh's stderr goes to a file so that a transport error keeps its diagnostic
+# without mixing into the headers and body that -i prints on stdout.
+err_file=$(mktemp)
+trap 'rm -f "$err_file"' EXIT
 attempt=0
 while :; do
   requested_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   response=$(gh api -i -X POST "repos/$repo/pulls/$pr/copilot-code-review" \
-    -f review_effort="$effort" 2>/dev/null || true)
+    -f review_effort="$effort" 2>"$err_file" || true)
   # awk reads the whole response, so a large body can't SIGPIPE printf.
   status=$(printf '%s\n' "$response" | awk 'NR == 1 { print $2 }')
   case $status in [0-9][0-9][0-9]) ;; *) status=0 ;; esac
@@ -86,6 +91,9 @@ done
 body=$(printf '%s\n' "$response" | awk 'body { print } /^\r?$/ { body = 1 }')
 failure_reason=$(json_field failure_reason "$body")
 message=$(json_field message "$body")
+if [ "$status" = 0 ] && [ -z "$message" ]; then
+  message=$(cat "$err_file")
+fi
 
 case $status in
   201) result=requested code=0 ;;

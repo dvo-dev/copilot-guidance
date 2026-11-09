@@ -89,7 +89,9 @@ named files, and point to a section, step, or file instead of affected code.
 Report flaws, contradictions, risks, missing requirements, and infeasible
 steps, each with a concrete scenario of what happens and what goes wrong.>
 <Findings mode only (delete in other modes): Judge each listed finding on its
-own merits. A finding can be valid but not worth addressing. Report additional
+own merits. A finding can be valid but not worth addressing. Return exactly one
+assessment per input ID, using `uncertain` when the evidence is thin; the 0.5
+confidence floor below applies only to additional findings. Report additional
 problems only if they are P0 or P1.>
 
 Severity:

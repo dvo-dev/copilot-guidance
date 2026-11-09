@@ -6,9 +6,9 @@
 #
 # Checks can take a while to appear after a push. "No checks" is trusted only
 # after the grace period (default 5 minutes), and a result without failures
-# only after the grace period or at the timeout. A failure is reported as soon
-# as it is seen. Otherwise the script waits until no check is pending, or until
-# the timeout (default 60 minutes).
+# only after the grace period or at the timeout. A failure is reported once no
+# check is pending; until then the script keeps waiting, up to the timeout
+# (default 60 minutes). At the timeout, failures seen so far are in "failing".
 #
 # Prints one JSON object:
 #   {"result": "pass" | "fail" | "pending" | "skipped", "total", "skipped",

@@ -74,7 +74,8 @@ mkdir -p "$(dirname "$lock")" && mkdir "$lock" &&
   then read `$lock/owner`. If another session owns it, stop and ask. Never run
   two pipelines on one branch.
 - **Resume:** when this session owns the lock, read the state file, verify the
-  branch and head, then continue from the last completed phase.
+  branch and head, then continue from the last completed phase. If there is no
+  state file yet, Intake never finished: restart it.
 - Before each commit or push, in any phase, confirm that the current branch is
   still the run's branch. If it changed, stop and ask.
 - If the pipeline stops before Handoff, leave the lock in place so that another
@@ -139,7 +140,8 @@ PR and report.
 
 ### 5. Local review
 
-Run [review-fix-loop](../review-fix-loop/SKILL.md) in pipeline mode.
+Run [review-fix-loop](../review-fix-loop/SKILL.md) in pipeline mode, and tell
+it which path the run is on.
 
 - **Full path:** up to 3 fix cycles.
 - **Light path:** one review. Fix cycles run only for blocking findings, and
@@ -150,11 +152,11 @@ Run [review-fix-loop](../review-fix-loop/SKILL.md) in pipeline mode.
 - **review-fix-loop stopped on an approach-level escalation:** stop and ask.
 - **It stopped because the gate or the review failed:** stop and report, with
   no PR.
-- **Otherwise:** continue. Pass every valid finding not fixed at the cap and
-  every escalation on to copilot-review-loop. They go first in the PR body
-  under "Needs human judgment", with blockers (P0 and P1) first. When
-  copilot-review-loop reuses an existing draft, whose body it does not edit,
-  they go in its summary comment instead.
+- **Otherwise:** continue. Pass every valid finding left unfixed, at the cap
+  or on the light path, and every escalation on to copilot-review-loop. They
+  go first in the PR body under "Needs human judgment", with blockers (P0 and
+  P1) first. When copilot-review-loop reuses an existing draft, whose body it
+  does not edit, they go in its summary comment instead.
 
 ### 7. Copilot review
 

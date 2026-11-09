@@ -32,6 +32,9 @@ Fixes must stay within the scope the user or plan approved.
     the run directory and ledger.
   - **Standalone:** anything else, such as a request from the user or from
     another session. Keep `state.md` in plan-to-pr's shape, without the lock.
+- **Path (pipeline only):** full or light. On the light path, fix cycles run
+  only for blocking (P0 or P1) fix items; record the other fix items as
+  "valid, not fixed: light path" and report them with the cap leftovers.
 - **Check commands:** discover them from the repository's agent instructions,
   contributing guide, CI workflows, and build manifests, preferring documented
   commands. Use the repository's own environment setup, such as its virtual
@@ -103,7 +106,9 @@ Take the first case that applies:
   slots failed. Stop and report.
 - **Approach-level escalation:** the reviewers show that the plan or design
   itself cannot meet the requirement. Stop and report; do not patch around it.
-- **No fix items:** exit clean, and report any other escalations.
+- **No fix items:** exit clean, and report any other escalations. If both
+  slots listed the same changed file or area under `not_reviewed`, exit with
+  an escalation that names it instead.
 - **Fix cycles used up (3 done):** this review was the confirmation review.
   1. Adjudicate it fully, including verification.
   2. Report its fix items as "valid, not fixed: fix-cycle cap reached".

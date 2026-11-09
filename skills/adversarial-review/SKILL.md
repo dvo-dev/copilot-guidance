@@ -115,6 +115,9 @@ anchors reviewers and destroys their independence.
        xargs -0 git hash-object --; } | git hash-object --stdin
    ```
 
+   Skip this and step 5 for a `topic` review with no repository, and say so in
+   the report.
+
 2. Launch both slots in one response, as two parallel calls to the host's
    subagent tool. In GitHub Copilot, use the `task` tool with:
    - `agent_type: code-review` for `change` and `findings` modes, or
@@ -166,7 +169,8 @@ evidence.
 1. **Cluster.** Merge findings with the same root cause. Record the source as
    A, B, or both, with each slot's original severity, for example
    `both (A P2, B P1)`. Rewrite absolute paths relative to the repository
-   root.
+   root. Also note any changed file or area that both slots list under
+   `not_reviewed`: nobody reviewed it.
 2. **Check the ledger** when the caller keeps one:
    - A finding rejected earlier with evidence stays rejected unless it brings
      new evidence.
@@ -211,6 +215,7 @@ Return a short summary to the caller or user:
 - the mode, target, and round, and the models and efforts as launched,
   including whether the round was degraded or was a review failure;
 - each slot's overall verdict;
+- changed files or areas that both slots listed under `not_reviewed`;
 - counts by disposition and severity, with blocking items first (P0 or P1
   findings marked fix or escalate);
 - escalations, phrased as concrete questions;

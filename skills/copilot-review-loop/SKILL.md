@@ -31,7 +31,11 @@ Run it only when the user asked for it or plan-to-pr invoked it.
 ## Inputs and scope
 
 - **Target:** the repository as `OWNER/REPO`, the current branch, the base
-  branch, and the PR number if one already exists.
+  branch, and the PR number if one already exists. `OWNER/REPO` is the
+  repository that holds the PR, usually the one `origin` points to. Record it
+  in `state.md` and pass it to every `gh pr` and `gh run` command as
+  `-R OWNER/REPO`, as the scripts already take it, so that gh's default
+  repository, `GH_REPO`, or another remote never redirects a check or a write.
 - **Run directory and ledger:** `dev-loop/<branch>/` in the host's session
   artifact directory, shared with review-fix-loop. Copilot finding IDs are
   `C<review>.<n>`.
@@ -81,8 +85,11 @@ cycle is left to act on it.
 
 ## 2. Push and open the draft PR
 
-1. Before pushing anything, look for an open PR for the branch:
-   `gh pr view --json number,state,isDraft,headRefOid,url`.
+1. Before pushing anything, look for a PR for the branch:
+   `gh pr view <branch> -R OWNER/REPO --json number,state,isDraft,headRefOid,headRepositoryOwner,url`.
+   If the command fails for any reason other than finding no PR, stop. If the
+   PR's head repository owner is not the owner of the repository you push
+   to, stop and report.
    - Closed or merged: stop.
    - Open but not a draft: stop and report before pushing. Never push to a
      ready PR or change its draft or ready state; a person decides whether to
@@ -91,7 +98,7 @@ cycle is left to act on it.
 2. Push without force: `git push -u origin HEAD`. If the remote rejects the
    push because it moved, stop and report. Never force-push.
 3. If there is no PR, open a draft PR. Use the host's PR tool if it has one; if
-   not, use `gh pr create --draft --base <base> --title <title> --body-file <run-dir>/pr-body.md`.
+   not, use `gh pr create -R OWNER/REPO --draft --base <base> --head <branch> --title <title> --body-file <run-dir>/pr-body.md`.
 
 The PR body uses a plain, concise voice and contains:
 
@@ -114,8 +121,8 @@ one final review without waiting for it.
 ### 3.1 Request a review
 
 First confirm that the PR head equals local `HEAD` with
-`gh pr view <pr> --json headRefOid`. Then run it with the Copilot review
-effort setting:
+`gh pr view <pr> -R OWNER/REPO --json headRefOid`. Then run it with the
+Copilot review effort setting:
 
 ```bash
 bash <skill-dir>/scripts/request-review.sh OWNER/REPO <pr> <copilot-effort>
@@ -222,16 +229,16 @@ For the failing checks on the head:
 
 1. Rerun failed GitHub Actions runs once to rule out a flake. One run can
    report several checks, so group the failing checks by run and run
-   `gh run rerun <run-id> --failed` once per run; an Actions check's link
-   contains `/actions/runs/<run-id>`. Checks from other CI providers can't be
-   rerun this way: skip their rerun and note it.
+   `gh run rerun <run-id> -R OWNER/REPO --failed` once per run; an Actions
+   check's link contains `/actions/runs/<run-id>`. Checks from other CI
+   providers can't be rerun this way: skip their rerun and note it.
 2. Before each rerun, record the run's attempt with
-   `gh run view <run-id> --json attempt`. After rerunning, poll
-   `gh run view <run-id> --json attempt,status` in slices as in step 3.2 until
-   it shows a higher attempt with status `completed`. Then read the checks
-   again with `wait-checks.sh --grace 0`, and confirm that the PR head has not
-   moved. Record checks that pass on rerun as flakes, and continue with the
-   checks that still fail.
+   `gh run view <run-id> -R OWNER/REPO --json attempt`. After rerunning, poll
+   `gh run view <run-id> -R OWNER/REPO --json attempt,status` in slices as in
+   step 3.2 until it shows a higher attempt with status `completed`. Then read
+   the checks again with `wait-checks.sh --grace 0`, and confirm that the PR
+   head has not moved. Record checks that pass on rerun as flakes, and
+   continue with the checks that still fail.
 3. Compare each remaining failure with the same check on the base branch's
    latest run. It is a baseline failure only when the same failing test or
    error also occurs on base.
@@ -255,10 +262,10 @@ is fix cycle k, so the last one allowed is fix cycle N.
    `Findings: C1.1, C1.3`, as in
    [review-fix-loop](../review-fix-loop/SKILL.md#5-fix-cycle).
 4. Before pushing, confirm that the PR is still an open draft with
-   `gh pr view <pr> --json state,isDraft`, and that no person has reviewed or
-   commented since the run began. If either check fails, do not push; see
-   "Stop conditions". Otherwise repeat the path check, push without force,
-   and confirm that the PR head equals the new local `HEAD`.
+   `gh pr view <pr> -R OWNER/REPO --json state,isDraft`, and that no person
+   has reviewed or commented since the run began. If either check fails, do
+   not push; see "Stop conditions". Otherwise repeat the path check, push
+   without force, and confirm that the PR head equals the new local `HEAD`.
 
 ### 3.7 Reply and resolve
 
@@ -322,7 +329,7 @@ and write it to `<run-dir>/summary.md`, never in the repository.
 - If a previous summary exists, update it in place. Look for an issue comment
   by you that contains `<!-- copilot-review-loop:summary -->`, then run
   `gh api -X PATCH repos/OWNER/REPO/issues/comments/<id> -F body=@<run-dir>/summary.md`.
-- Otherwise run `gh pr comment <pr> --body-file <run-dir>/summary.md`.
+- Otherwise run `gh pr comment <pr> -R OWNER/REPO --body-file <run-dir>/summary.md`.
 
 Use this format, in at most about 40 lines, with a plain voice and no emoji
 headers:
@@ -363,8 +370,9 @@ URL, and the exit reason to the caller.
   summary.
 - **Request failure, review failure, or timeout:** post the summary and state
   the failure.
-- **Merge conflicts with the base** (`gh pr view --json mergeable` shows
-  `CONFLICTING`): post the summary. Do not rebase, merge, or force-push.
+- **Merge conflicts with the base**
+  (`gh pr view <pr> -R OWNER/REPO --json mergeable` shows `CONFLICTING`):
+  post the summary. Do not rebase, merge, or force-push.
 - **A person starts reviewing:** finish replies for the current review, post
   the summary, and hand off.
 - **Someone else pushed to the branch** (the PR head moved to a commit this run

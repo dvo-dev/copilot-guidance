@@ -45,7 +45,9 @@ Run it only when the user asked for it or plan-to-pr invoked it.
 The scripts live in `scripts/` next to this file. Resolve their directory from
 where this SKILL.md was loaded, and run each as
 `bash <skill-dir>/scripts/<name>.sh`. Each prints JSON on stdout; see "Script
-reference" for exit codes.
+reference" for exit codes. Exit 2 from any script is an error, such as a
+network failure: run the same command once more, and if it exits 2 again,
+stop and post the summary.
 
 ## 1. Preconditions
 
@@ -60,14 +62,17 @@ reference" for exit codes.
 
 ## 2. Push and open the draft PR
 
-1. Push without force: `git push -u origin HEAD`. If the remote rejects the
-   push because it moved, stop and report. Never force-push.
-2. Look for an open PR for the branch:
+1. Before pushing anything, look for an open PR for the branch:
    `gh pr view --json number,state,isDraft,headRefOid,url`.
    - Closed or merged: stop.
-   - Open: reuse it as is, and never change its draft or ready state.
-3. Otherwise open a draft PR. Use the host's PR tool if it has one; if not, use
-   `gh pr create --draft --base <base> --title <title> --body-file <file>`.
+   - Open but not a draft: stop and report before pushing. Never push to a
+     ready PR or change its draft or ready state; a person decides whether to
+     convert it.
+   - Open draft: reuse it as is.
+2. Push without force: `git push -u origin HEAD`. If the remote rejects the
+   push because it moved, stop and report. Never force-push.
+3. If there is no PR, open a draft PR. Use the host's PR tool if it has one; if
+   not, use `gh pr create --draft --base <base> --title <title> --body-file <file>`.
 
 The PR body uses a plain, concise voice and contains:
 
@@ -99,19 +104,25 @@ act on the exit code:
 | Exit | Meaning | Action |
 | --- | --- | --- |
 | 0 | Requested (HTTP 201) | Wait for the review (step 3.2). |
-| 10 | Another Copilot review is pending (HTTP 409), possibly for an older head or a different effort | Wait it out with `wait-review.sh --any`, then request again. The pending review never counts as review k. |
+| 10 | Another Copilot review is pending (HTTP 409), possibly for an older head or a different effort | Wait it out with `wait-review.sh --any`, in slices as in step 3.2, then request again. The pending review never counts as review k. |
 | 11 | Max unavailable (HTTP 422 `INVALID_REVIEW_EFFORT`) | Request again at the highest level listed in `message`, ranked MAX, then BALANCED, then LITE, and never AUTO. That level becomes this review's requested effort. Flag the downgrade in the summary. |
 | 12 | Denied: not eligible, no quota, forbidden, or not found | Stop, and post the summary. |
 | 13 | Rate limited or unavailable after the script's retries | Stop, and post the summary. |
 
 ### 3.2 Wait for the review and CI
 
-Run both. CI can finish while the review is still running.
+Run both in the foreground, in slices of at most 9 minutes, and keep the turn
+active. Unattended hosts, such as autopilot modes, can stop a run that ends
+its turn to wait for background work, and each slice must finish within the
+host's command time limit. In GitHub Copilot, run each slice with the bash
+tool's `initial_wait` set to 600 seconds. Repeat a command while it exits with
+its timeout code, 21 or 32, for up to about 60 minutes in total per wait. CI
+can finish while the review is still running.
 
 ```bash
 bash <skill-dir>/scripts/wait-review.sh OWNER/REPO <pr> <baseline_review_id> \
-  --head <head_sha> --effort <effort> --timeout 60
-bash <skill-dir>/scripts/wait-checks.sh OWNER/REPO <pr> --grace 5 --timeout 60
+  --head <head_sha> --effort <effort> --timeout 9
+bash <skill-dir>/scripts/wait-checks.sh OWNER/REPO <pr> --grace 5 --timeout 9
 ```
 
 `<effort>` is the `effort` of the request that succeeded: `max`, unless step
@@ -124,14 +135,19 @@ bash <skill-dir>/scripts/wait-checks.sh OWNER/REPO <pr> --grace 5 --timeout 60
     automatic review. Request the same effort again once, without spending a
     fix cycle. If that review also lands at a different effort, accept it and
     record its actual effort.
-  - 21: timed out. Stop iterating and post the summary.
+  - 21: the slice timed out. Repeat it. After about 60 minutes in total, stop
+    iterating and post the summary.
 - `wait-checks.sh` waits for checks to register and finish:
   - 0 or 30: CI passed or failed.
   - 31 with `workflows_present: true`: CI state is unknown, not green.
   - 31 with `workflows_present: false`: the repository has no CI.
-  - 32: timed out with checks pending; treat CI as unknown.
+  - 32: the slice timed out with checks pending. Repeat it. After about 60
+    minutes in total, treat CI as unknown.
   - 33: every check was skipped, for example by jobs that do not run on draft
     PRs; treat CI as unknown, not green.
+
+After both waits, confirm that the PR head still equals `head_sha`. If it
+moved to a commit this run did not push, stop; see "Stop conditions".
 
 ### 3.3 Collect findings
 
@@ -181,8 +197,10 @@ by the change:
 1. Fix each item, highest severity first, with a failing test first when
    practical.
 2. Run the local gates.
-3. Commit the explicit paths as `Address Copilot review findings (cycle <k>)`,
-   listing the finding IDs in the commit body.
+3. Commit the explicit paths as `Address Copilot review findings (cycle <k>)`.
+   The commit body lists only the finding IDs, for example
+   `Findings: C1.1, C1.3`, as in
+   [review-fix-loop](../review-fix-loop/SKILL.md#5-fix-cycle-at-most-3).
 4. Repeat the path check, push without force, and confirm that the PR head
    equals the new local `HEAD`.
 
@@ -270,6 +288,9 @@ comment URL, and the exit reason to the caller.
   `CONFLICTING`): post the summary. Do not rebase, merge, or force-push.
 - **A person starts reviewing:** finish replies for the current review, post
   the summary, and hand off.
+- **Someone else pushed to the branch** (the PR head moved to a commit this run
+  did not push): post the summary and hand off. Do not review, fix, or push
+  on top of it.
 
 ## Script reference
 
@@ -319,6 +340,8 @@ sender.
 | Input | Expected behavior |
 | --- | --- |
 | The request returns 409 right after a push | Wait out the pending review with `--any`, then request Max for the current head. The pending review does not count. |
+| The branch already has an open PR that is not a draft | Stop before pushing and report. Never push to it or change its state. |
+| Someone else pushes to the branch while the loop waits | After the wait, see that the PR head moved, post the summary, and hand off. |
 | A review requested at Max lands at BALANCED | Request Max again once, without spending a fix cycle. If it lands at BALANCED again, accept it and record the actual effort. |
 | Max is unavailable for the repository | Request again at the highest listed level, wait for a review at that level, and flag the downgrade in the summary. |
 | All findings are rejected or deferred, and CI is green | Reply to and resolve each one, then post the summary without requesting another review. |

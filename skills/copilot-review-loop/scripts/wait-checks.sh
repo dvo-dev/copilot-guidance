@@ -17,7 +17,8 @@
 # passed or failed because every check was skipped, for example by a job that
 # does not run on draft pull requests; treat CI as unknown, not green.
 # For "none", workflows_present tells whether the head commit has GitHub
-# Actions workflow files; if true, treat CI as unknown, not green.
+# Actions workflow files; if true, treat CI as unknown, not green. If that
+# lookup fails for any reason other than a 404, the script exits 2.
 #
 # Exit codes:
 #   0   no check pending, none failed
@@ -86,10 +87,15 @@ while :; do
       if [ "$SECONDS" -ge "$grace_end" ]; then
         head_sha=$(gh pr view "$pr" -R "$repo" --json headRefOid --jq .headRefOid) ||
           die "could not read pull request $repo#$pr"
-        present=false
-        if gh api "repos/$repo/contents/.github/workflows?ref=$head_sha" --jq 'length' \
-          >/dev/null 2>&1; then
+        # Only a 404 means there are no workflow files; any other failure is an error.
+        if probe=$(gh api "repos/$repo/contents/.github/workflows?ref=$head_sha" \
+          --jq 'length' 2>&1); then
           present=true
+        else
+          case $probe in
+            *'HTTP 404'*) present=false ;;
+            *) die "could not check workflow files for $repo#$pr: $probe" ;;
+          esac
         fi
         printf '{"result":"none","total":0,"failing":[],"workflows_present":%s}\n' "$present"
         exit 31

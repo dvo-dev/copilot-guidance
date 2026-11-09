@@ -65,10 +65,12 @@ Use two slots from different providers.
   supports. Pass the model and effort on every launch rather than relying on
   host defaults, even where the host's subagent policy says to omit them unless
   the user requires them.
-- Decide which model is most capable from the provider's documentation and the
-  host's model catalog, not from names, version numbers, or price. When a
-  default above is superseded or unavailable, use that provider's next most
-  capable model in the catalog and record the substitution.
+- The table is the source of truth. When the user names models, use those
+  instead. Consult a provider's documentation only when its default is missing
+  from the host's model catalog, or when the user asks to update the defaults.
+  Then pick that provider's most capable available model from the
+  documentation, not from names, version numbers, or price, and record the
+  substitution.
 - Never run both slots on one provider. If a provider has no available model,
   run the other slot alone and label the round **single-model (degraded)**
   everywhere it is reported.
@@ -79,7 +81,8 @@ Use two slots from different providers.
 
 Fill in the template in [reviewer-brief.md](reviewer-brief.md) once, and send
 the identical text to both slots. Only the model differs. Save the packet as
-`packets/<round>.md` in the run directory.
+`packets/<prefix><round>.md` in the run directory, for example `packets/L2.md`,
+so that loops sharing a run directory never overwrite each other's files.
 
 The packet contains:
 
@@ -112,28 +115,37 @@ anchors reviewers and destroys their independence.
        xargs -0 git hash-object --; } | git hash-object --stdin
    ```
 
-2. Launch both slots in the same turn as background subagents with the host's
+2. Launch both slots in one response, as two parallel calls to the host's
    subagent tool. In GitHub Copilot, use the `task` tool with:
    - `agent_type: code-review` for `change` and `findings` modes, or
      `rubber-duck` for `topic` mode;
    - `model` set to the slot's model and `reasoning_effort: max`;
-   - `mode: background`;
+   - `mode: sync`, so that each call returns its slot's result;
    - the packet as the prompt.
-3. Record each launch's exact model and effort. A slot launched without an
-   explicit model or effort makes the round degraded, so never report it as
-   dual-model.
-4. Wait for both completion notifications. Do not poll, do not read one result
-   before both are launched, and do not modify the working tree while either
-   reviewer runs.
+
+   The packet is frozen before either result exists, so sync calls keep the
+   slots independent.
+3. Record the model and effort you passed to each slot, and the effective
+   values when the host reports them. A slot launched without an explicit
+   model or effort, or whose reported values differ from the ones passed,
+   makes the round degraded; never report such a round as dual-model.
+4. Keep the turn active until both results are in. Unattended hosts, such as
+   autopilot modes, can stop a run that ends its turn to wait for background
+   work. If the host can only launch subagents in the background, wait with
+   blocking reads, such as `read_agent` with `wait: true`, instead of ending
+   the turn. Do not read one result before both are launched, and do not
+   modify the working tree while either reviewer runs.
 5. Run step 1's commands again. If `HEAD`, the status, or the fingerprint
    changed, discard the round's results, note it, and run the round once more.
    If it happens again, stop and report.
-6. Only after both finish, save each raw output as `reviews/<round>-<slot>.json`.
+6. Only after both finish, save each raw output as
+   `reviews/<prefix><round>-<slot>.json`.
 
 If a slot fails or times out, retry it once with the same packet. If it fails
 again, continue with the other slot's result labeled single-model (degraded).
-If an output is not valid JSON for the schema, ask that slot once to return
-only the corrected JSON.
+If an output is wrapped in one code fence, strip the fence. If it is still not
+valid JSON for the schema, ask that slot once to return only the corrected
+JSON.
 
 This isolation comes from fresh subagent contexts, a frozen packet,
 simultaneous launch, the reviewer rules, and the git-state check. It is not a
@@ -145,8 +157,10 @@ rules allow. Say so wherever a reader could assume otherwise.
 Reviewer findings are hypotheses. The parent turns them into decisions with
 evidence.
 
-1. **Cluster.** Merge findings with the same root cause, and record the source
-   as A, B, or both.
+1. **Cluster.** Merge findings with the same root cause. Record the source as
+   A, B, or both, with each slot's original severity, for example
+   `both (A P2, B P1)`. Rewrite absolute paths relative to the repository
+   root.
 2. **Check the ledger** when the caller keeps one:
    - A finding rejected earlier with evidence stays rejected unless it brings
      new evidence.
@@ -155,7 +169,8 @@ evidence.
 3. **Verify.** Read the cited code at the reviewed revision and trace the
    trigger. When the caller will fix the finding, prefer a failing test as the
    proof.
-4. **Classify** each cluster:
+4. **Classify** each cluster, and set its severity from your own verification
+   rather than from either slot:
    - **fix:** verified or highly plausible, in scope, and worth changing now.
    - **reject:** disproved. Cite the code (`path:line`) or fact that disproves
      it.

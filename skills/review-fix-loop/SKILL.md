@@ -28,9 +28,10 @@ Fixes must stay within the scope the user or plan approved.
 - **Intent (optional):** the plan's goal, acceptance criteria, and non-goals.
   These are passed to the reviewers.
 - **Mode:**
-  - **Standalone:** the user asked for this loop.
   - **Pipeline:** [plan-to-pr](../plan-to-pr/SKILL.md) called it and supplies
     the run directory and ledger.
+  - **Standalone:** anything else, such as a request from the user or from
+    another session. Keep `state.md` in plan-to-pr's shape, without the lock.
 - **Check commands:** discover them from the repository's agent instructions,
   contributing guide, CI workflows, and build manifests, preferring documented
   commands. Use the repository's own environment setup, such as its virtual
@@ -69,6 +70,9 @@ changed areas first, then the full unit suite.
   reviewer effort.
 - If the repository has no unit tests, run the strongest checks available and
   say so in the report.
+- Use the repository's documented tooling. Do not install new tools for the
+  gate. Read-only smoke runs, such as a script's usage errors or read-only API
+  calls, are allowed.
 - **Checks integrity:** never weaken, skip, or delete tests. Never mark tests as
   expected failures, lower thresholds, disable lint rules, or edit CI
   configuration to get green.
@@ -104,20 +108,26 @@ For each fix item, highest severity first:
 
 1. Write a failing test that reproduces it, when practical. If a test is
    impractical, for example for documentation or configuration, record why in
-   the ledger.
-2. Make the smallest fix that addresses the root cause, and stay in scope.
+   the ledger. If the repository has no test suite, keep reproductions in the
+   run directory, never in the repository, and cite them in the ledger.
+2. Make the smallest fix that addresses the root cause, and stay in scope. A
+   tightly coupled consequence of the fix, such as a gap that the fix makes
+   reachable, may be fixed in the same cycle; record it in the ledger under
+   that finding.
 3. Run the targeted tests.
 
 Then:
 
 1. Run the full gate (step 2).
-2. Commit the explicit paths as `Address review findings (cycle <n>)`, listing
-   the finding IDs in the commit body.
+2. Commit the explicit paths as `Address review findings (cycle <n>)`. The
+   commit body lists only the finding IDs, for example
+   `Findings: L1.1, L1.3`. Keep finding text, dispositions, and reasons in the
+   ledger, because later reviewers read the commit range.
 3. Return to step 3 for a fresh review.
 
 Escalate instead of spending another cycle when:
 
-- a finding recurs after its fix; or
+- a finding still recurs after a second fix; or
 - the fix would change scope or behavior that the plan did not approve.
 
 ## 6. Report

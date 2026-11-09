@@ -145,7 +145,10 @@ If a slot fails or times out, retry it once with the same packet. If it fails
 again, continue with the other slot's result labeled single-model (degraded).
 If an output is wrapped in one code fence, strip the fence. If it is still not
 valid JSON for the schema, ask that slot once to return only the corrected
-JSON.
+JSON. If the host cannot send a follow-up message to a finished subagent, as
+with sync launches in GitHub Copilot, convert that output to the schema
+yourself without changing its content, keep the raw output, and note the
+conversion in the report.
 
 This isolation comes from fresh subagent contexts, a frozen packet,
 simultaneous launch, the reviewer rules, and the git-state check. It is not a

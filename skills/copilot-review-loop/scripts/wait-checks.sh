@@ -4,9 +4,11 @@
 # Usage: wait-checks.sh OWNER/REPO PR_NUMBER
 #          [--grace MINUTES] [--timeout MINUTES] [--interval SECONDS]
 #
-# Checks can take a while to appear after a push, so "no checks" is trusted
-# only after the grace period (default 5 minutes). Then the script waits until
-# no check is pending, or until the timeout (default 60 minutes).
+# Checks can take a while to appear after a push. "No checks" is trusted only
+# after the grace period (default 5 minutes), and a result without failures
+# only after the grace period or at the timeout. A failure is reported as soon
+# as it is seen. Otherwise the script waits until no check is pending, or until
+# the timeout (default 60 minutes).
 #
 # Prints one JSON object:
 #   {"result": "pass" | "fail" | "pending" | "skipped", "total", "skipped",
@@ -105,17 +107,20 @@ while :; do
       result=$(printf '%s\n' "$out" | head -n 1)
       json=$(printf '%s\n' "$out" | sed -n 2p)
       case $result in
-        pass)
+        pass | skipped)
+          # Late checks can still register, so trust a result without
+          # failures only after the grace period or at the deadline.
+          if [ "$SECONDS" -lt "$grace_end" ] && [ "$SECONDS" -lt "$deadline" ]; then
+            sleep "$interval"
+            continue
+          fi
           printf '%s\n' "$json"
-          exit 0
+          [ "$result" = pass ] && exit 0
+          exit 33
           ;;
         fail)
           printf '%s\n' "$json"
           exit 30
-          ;;
-        skipped)
-          printf '%s\n' "$json"
-          exit 33
           ;;
       esac
       if [ "$SECONDS" -ge "$deadline" ]; then

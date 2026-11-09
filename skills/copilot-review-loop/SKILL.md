@@ -72,7 +72,7 @@ stop and post the summary.
 2. Push without force: `git push -u origin HEAD`. If the remote rejects the
    push because it moved, stop and report. Never force-push.
 3. If there is no PR, open a draft PR. Use the host's PR tool if it has one; if
-   not, use `gh pr create --draft --base <base> --title <title> --body-file <file>`.
+   not, use `gh pr create --draft --base <base> --title <title> --body-file <run-dir>/pr-body.md`.
 
 The PR body uses a plain, concise voice and contains:
 
@@ -116,8 +116,9 @@ active. Unattended hosts, such as autopilot modes, can stop a run that ends
 its turn to wait for background work, and each slice must finish within the
 host's command time limit. In GitHub Copilot, run each slice with the bash
 tool's `initial_wait` set to 600 seconds. Repeat a command while it exits with
-its timeout code, 21 or 32, for up to about 60 minutes in total per wait. CI
-can finish while the review is still running.
+its timeout code, 21 or 32, for up to about 60 minutes in total per wait.
+Repeat `wait-checks.sh` with `--grace 0`, since the first slice already gave
+checks time to register. CI can finish while the review is still running.
 
 ```bash
 bash <skill-dir>/scripts/wait-review.sh OWNER/REPO <pr> <baseline_review_id> \
@@ -155,6 +156,10 @@ moved to a commit this run did not push, stop; see "Stop conditions".
 bash <skill-dir>/scripts/review-threads.sh OWNER/REPO <pr>
 ```
 
+- Reconcile the ledger first. For each Copilot thread already in the ledger,
+  post its reply if `agent_replied` is false, and resolve it if it is still
+  unresolved and its disposition says to resolve it, as in step 3.7. This
+  finishes work that a crashed or interrupted run left behind.
 - Keep unresolved Copilot threads that are not in the ledger yet. Each thread
   ID maps to one finding ID.
 - Read the review's overview body as well, and record any finding there that
@@ -201,8 +206,10 @@ by the change:
    The commit body lists only the finding IDs, for example
    `Findings: C1.1, C1.3`, as in
    [review-fix-loop](../review-fix-loop/SKILL.md#5-fix-cycle-at-most-3).
-4. Repeat the path check, push without force, and confirm that the PR head
-   equals the new local `HEAD`.
+4. Before pushing, confirm that the PR is still an open draft with
+   `gh pr view <pr> --json state,isDraft`. If it is not, do not push; see
+   "Stop conditions". Otherwise repeat the path check, push without force,
+   and confirm that the PR head equals the new local `HEAD`.
 
 On the confirmation review (k = 4), skip this step. Its fix items become
 "valid, not fixed: fix-cycle cap reached".
@@ -225,10 +232,11 @@ a resumed run sees `agent_replied: true` for a thread, it does not reply
 again. If that thread is still unresolved and its disposition says to resolve
 it, the run resolves it now. The disposition is in the ledger and in the
 reply's opening words.
-Reply on the thread itself, never in a top-level comment:
+Write each reply body to a file in the run directory, never in the
+repository, and reply on the thread itself, never in a top-level comment:
 
 ```bash
-gh api -X POST repos/OWNER/REPO/pulls/<pr>/comments/<comment_id>/replies -F body=@reply.md
+gh api -X POST repos/OWNER/REPO/pulls/<pr>/comments/<comment_id>/replies -F body=@<run-dir>/reply.md
 gh api graphql -f query='mutation($id: ID!, $reason: PullRequestReviewThreadResolutionReason) {
   resolveReviewThread(input: {threadId: $id, resolutionReason: $reason}) { thread { isResolved } } }' \
   -f id=<thread_id> -f reason=ADDRESSED
@@ -245,12 +253,13 @@ If the API rejects `resolutionReason`, resolve without it.
 
 ## 4. Final summary
 
-Always post the summary, whatever the exit reason. Build it from the ledger.
+Always post the summary, whatever the exit reason. Build it from the ledger,
+and write it to `<run-dir>/summary.md`, never in the repository.
 
 - If a previous summary exists, update it in place. Look for an issue comment
   by you that contains `<!-- copilot-review-loop:summary -->`, then run
-  `gh api -X PATCH repos/OWNER/REPO/issues/comments/<id> -F body=@summary.md`.
-- Otherwise run `gh pr comment <pr> --body-file summary.md`.
+  `gh api -X PATCH repos/OWNER/REPO/issues/comments/<id> -F body=@<run-dir>/summary.md`.
+- Otherwise run `gh pr comment <pr> --body-file <run-dir>/summary.md`.
 
 Use this format, in at most about 40 lines, with a plain voice and no emoji
 headers:
@@ -291,6 +300,8 @@ comment URL, and the exit reason to the caller.
 - **Someone else pushed to the branch** (the PR head moved to a commit this run
   did not push): post the summary and hand off. Do not review, fix, or push
   on top of it.
+- **The PR is no longer an open draft** (someone marked it ready, closed it,
+  or merged it): do not push. Post the summary and hand off.
 
 ## Script reference
 

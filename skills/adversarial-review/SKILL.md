@@ -44,7 +44,8 @@ separate request decides what to fix.
     each finding's original text only, never replies from the author or an
     agent.
 - **Intent (optional):** the requirement, acceptance criteria, and non-goals,
-  quoted verbatim from the plan or request.
+  quoted verbatim from the plan or request. When a later decision supersedes
+  an earlier one, quote only the later one.
 - **Round, ID prefix, and run directory:** supplied by the calling loop. For a
   standalone run, use round 1, prefix `R`, and
   `adversarial-review/<timestamp>/` in the host's session artifact directory.
@@ -143,7 +144,9 @@ anchors reviewers and destroys their independence.
    ```
 
    Skip this and step 5 for a `topic` review with no repository, and say so in
-   the report.
+   the report. When the caller keeps
+   [run state](../plan-to-pr/run-state.md), set its `In flight` to
+   `round <prefix><round> launched, packets/<prefix><round>.md, head <sha>`.
 
 2. Launch both slots in one response, as two parallel calls to the host's
    subagent tool. In GitHub Copilot, use the `task` tool with:
@@ -170,7 +173,8 @@ anchors reviewers and destroys their independence.
    changed, discard the round's results, note it, and run the round once more.
    If it happens again, stop and report.
 6. Only after both finish, save each raw output as
-   `reviews/<prefix><round>-<slot>.json`.
+   `reviews/<prefix><round>-<slot>.json`, then set the caller's `In flight`
+   to `round <prefix><round> saved`.
 
 If a slot fails or times out, retry it once with the same packet. If it fails
 again, continue with the other slot's result labeled single-model (degraded).
@@ -199,7 +203,8 @@ evidence.
    `both (A P2, B P1)`. Rewrite absolute paths relative to the repository
    root. Also note any changed file or area that both slots list under
    `not_reviewed`: nobody reviewed it.
-2. **Check the ledger** when the caller keeps one:
+2. **Check the ledger** when the caller keeps one, and the ledgers of earlier
+   runs on the same branch:
    - A finding rejected earlier with evidence stays rejected unless it brings
      new evidence.
    - A finding fixed earlier but raised again means the fix may be incomplete;
@@ -219,7 +224,8 @@ evidence.
    - Agreement between slots raises priority, but it is not proof. A finding
      from one slot is not noise; model diversity exists to surface it.
    - The parent usually wrote the code. Before rejecting a finding that you or
-     any reviewer rated P0 or P1, or any finding both slots raised, launch one
+     any reviewer rated P0 or P1, or any finding both slots raised or, in
+     `findings` mode, both judged valid, launch one
      fresh validator with the validator brief in
      [reviewer-brief.md](reviewer-brief.md). Use the other provider's flagship
      at the reviewer effort, and give it only the finding, the cited locations,
@@ -228,13 +234,17 @@ evidence.
      it as fix or escalate.
    - Never accept a finding only because a reviewer was confident, and never
      fix something just to appease a reviewer.
-6. **Record** each cluster in `ledger.md` as one table row:
+6. **Record** each cluster in `ledger.md` as one table row, writing all of the
+   round's rows at once, after every cluster is adjudicated:
 
-   | ID | Round | Source | Sev | Location | Summary | Disposition | Evidence | Link |
-   | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+   | ID | Round | Source | Sev | Location | Summary | Disposition | State | Evidence | Link |
+   | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
    The caller assigns IDs with its prefix, for example `L1.3` for the local
-   loop or `C2.1` for Copilot findings.
+   loop or `C2.1` for Copilot findings. State starts at `open`, or at `done`
+   when the finding needs no further step, and the calling loop updates it as
+   [run state](../plan-to-pr/run-state.md#the-ledger-and-finding-progress)
+   describes. Then clear the caller's `In flight`.
 
 ## 5. Report
 
@@ -274,10 +284,10 @@ helper and calls it from a webhook sender.
 
 Ledger rows:
 
-| ID | Round | Source | Sev | Location | Summary | Disposition | Evidence | Link |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| L1.1 | 1 | both | P1 | `retry.go:14` | First retry has zero delay | fix | `TestRetryDelayStartsAtBase` fails | |
-| L1.2 | 1 | B | P3 | `retry.go:9` | Rename `attempt` to `retryCount` | defer | Naming preference | |
+| ID | Round | Source | Sev | Location | Summary | Disposition | State | Evidence | Link |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| L1.1 | 1 | both | P1 | `retry.go:14` | First retry has zero delay | fix | open | `TestRetryDelayStartsAtBase` fails | |
+| L1.2 | 1 | B | P3 | `retry.go:9` | Rename `attempt` to `retryCount` | defer | done | Naming preference | |
 
 Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6-astra xhigh):
 1 fix (P1), 1 defer. A: incorrect. B: incorrect."

@@ -25,6 +25,7 @@ output.
 - Do not invoke skills, launch subagents or tasks, message or list agents, or
   query session history, session databases, or earlier outputs with any tool.
   Use only this packet and the repository at the revision given below.
+  Read-only lookups of public documentation are allowed.
 - Read-only: do not create, edit, or delete files. Do not change git state: no
   checkout, switch, stash, commit, reset, or branch changes. Do not install
   packages, build, or run tests. Make no network writes.
@@ -107,7 +108,8 @@ result. Do not pad.
 
 ## Output
 
-Return only one JSON object that matches this schema, with no other text. Give
+Return only one JSON object that matches this schema, with no other text. Start
+your reply with `{` and end it with `}`: no code fence, Markdown, or prose. Give
 paths relative to the repository root:
 
 <Schema for the mode. See "Output schemas".>

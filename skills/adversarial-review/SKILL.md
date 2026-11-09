@@ -143,6 +143,9 @@ anchors reviewers and destroys their independence.
 
 If a slot fails or times out, retry it once with the same packet. If it fails
 again, continue with the other slot's result labeled single-model (degraded).
+If both slots fail after their retries, the round has no result: report a
+review failure and record no dispositions. Callers treat it as a failure, never
+as a clean review.
 If an output is wrapped in one code fence, strip the fence. If it is still not
 valid JSON for the schema, ask that slot once to return only the corrected
 JSON. If the host cannot send a follow-up message to a finished subagent, as
@@ -187,8 +190,8 @@ evidence.
      any reviewer rated P0 or P1, or any finding both slots raised, launch one
      fresh validator with the validator brief in
      [reviewer-brief.md](reviewer-brief.md). Use the other provider's flagship
-     at maximum effort, and give it only the finding and the cited locations,
-     plus the packet's Target section in `topic` mode. Reject only if it
+     at maximum effort, and give it only the finding, the cited locations,
+     and the packet's Target section. Reject only if it
      refutes the finding. If it upholds the finding or is uncertain, classify
      it as fix or escalate.
    - Never accept a finding only because a reviewer was confident, and never
@@ -206,7 +209,7 @@ evidence.
 Return a short summary to the caller or user:
 
 - the mode, target, and round, and the models and efforts as launched,
-  including whether the round was degraded;
+  including whether the round was degraded or was a review failure;
 - each slot's overall verdict;
 - counts by disposition and severity, with blocking items first (P0 or P1
   findings marked fix or escalate);

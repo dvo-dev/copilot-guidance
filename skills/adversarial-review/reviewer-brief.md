@@ -73,7 +73,9 @@ Report a finding only when all of these hold:
 Do not report:
 
 - style, formatting, or naming preferences;
-- anything a formatter, linter, or type checker would catch;
+- style or formatting issues that a formatter or linter would flag; a defect
+  that breaks the build or the behavior is reportable even if a tool could
+  catch it;
 - speculative problems that depend on inputs you cannot show are reachable;
 - subjective design preferences;
 - claims about the host's tools or environment that you cannot verify from the
@@ -239,18 +241,20 @@ You are an independent validator subagent.
 <ID, severity, title, location, and the finding text, verbatim from the
 reviewer that raised it.>
 
-<Topic mode only (delete in other modes): a "## Target" section with the
-review packet's Target section, verbatim.>
+## Target
+
+<The review packet's Target section, verbatim. It names the revision and any
+uncommitted changes, untracked files, or inline topic text that was reviewed.>
 
 ## Code
 
-Repository: <absolute path>, revision <SHA>. Read the cited locations and
-anything else you need to decide.
+Read the cited locations in that target, and anything else you need to
+decide.
 
 ## Question
 
-Is this finding real? Can the described trigger happen at this revision and
-lead to the described outcome? Decide from the code, not from the finding's
+Is this finding real? Can the described trigger happen in the target and lead
+to the described outcome? Decide from the code or text, not from the finding's
 stated confidence.
 
 ## Output

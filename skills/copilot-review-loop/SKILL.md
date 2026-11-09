@@ -176,8 +176,9 @@ bash <skill-dir>/scripts/review-threads.sh OWNER/REPO <pr>
   has no thread.
 - Note any reviews or comments that people other than you posted since the run
   began. Do not act on them; see "Stop conditions".
-- **Done-clean:** no unadjudicated findings from this review, and a fresh check
-  of the current head shows no failing check. Go to step 4. Report CI as
+- **Done-clean:** no unadjudicated findings among everything collected,
+  whichever review raised it, and a fresh check of the current head shows no
+  failing check. Go to step 4. Report CI as
   green; as none when the repository has no CI; or as unknown when checks
   were skipped, missing, or still pending.
 
@@ -189,6 +190,7 @@ Run [adversarial-review](../adversarial-review/SKILL.md) in `findings` mode.
   replies.
 - Adjudicate each finding into fix, reject, defer, or escalate.
 - Do this on every review, including the confirmation review.
+- If adversarial-review reports a review failure, stop and post the summary.
 
 ### 3.5 Classify CI failures
 
@@ -199,9 +201,13 @@ For the failing checks on the head:
    `gh run rerun <run-id> --failed` once per run; an Actions check's link
    contains `/actions/runs/<run-id>`. Checks from other CI providers can't be
    rerun this way: skip their rerun and note it.
-2. Wait for the reruns with `wait-checks.sh --grace 0`, in slices as in step
-   3.2, and confirm that the PR head has not moved. Record checks that pass
-   on rerun as flakes, and continue with the checks that still fail.
+2. Before each rerun, record the run's attempt with
+   `gh run view <run-id> --json attempt`. After rerunning, poll
+   `gh run view <run-id> --json attempt,status` in slices as in step 3.2 until
+   it shows a higher attempt with status `completed`. Then read the checks
+   again with `wait-checks.sh --grace 0`, and confirm that the PR head has not
+   moved. Record checks that pass on rerun as flakes, and continue with the
+   checks that still fail.
 3. Compare each remaining failure with the same check on the base branch's
    latest run. It is a baseline failure only when the same failing test or
    error also occurs on base.
@@ -225,7 +231,8 @@ by the change:
    `Findings: C1.1, C1.3`, as in
    [review-fix-loop](../review-fix-loop/SKILL.md#5-fix-cycle-at-most-3).
 4. Before pushing, confirm that the PR is still an open draft with
-   `gh pr view <pr> --json state,isDraft`. If it is not, do not push; see
+   `gh pr view <pr> --json state,isDraft`, and that no person has reviewed or
+   commented since the run began. If either check fails, do not push; see
    "Stop conditions". Otherwise repeat the path check, push without force,
    and confirm that the PR head equals the new local `HEAD`.
 
@@ -234,8 +241,10 @@ On the confirmation review (k = 4), skip this step. Its fix items become
 
 ### 3.7 Reply and resolve
 
-Handle every adjudicated thread, whether or not a commit was pushed. Reply
-first, then resolve:
+Handle every adjudicated thread, whether or not a commit was pushed. Before
+replying, confirm that the PR head still equals the head this run reviewed or
+last pushed; if it moved, stop, see "Stop conditions". Reply first, then
+resolve:
 
 | Disposition | Reply starts with | Resolve as |
 | --- | --- | --- |

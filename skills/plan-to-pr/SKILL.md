@@ -75,6 +75,8 @@ mkdir -p "$(dirname "$lock")" && mkdir "$lock" &&
   two pipelines on one branch.
 - **Resume:** when this session owns the lock, read the state file, verify the
   branch and head, then continue from the last completed phase.
+- Before each commit or push, in any phase, confirm that the current branch is
+  still the run's branch. If it changed, stop and ask.
 - If the pipeline stops before Handoff, leave the lock in place so that another
   session stops and asks instead of starting over.
 - Update Progress after every todo and phase. Record unexpected findings under
@@ -110,8 +112,11 @@ the plan text inlined in the packet and finding IDs `P<round>.<n>`.
 
 - **Clarifications within scope:** update the plan, log them in the Decision
   Log, and continue.
+- **Escalations,** such as an ambiguous requirement or a product decision:
+  stop and ask before implementing.
 - **An approach-level problem or a scope change:** stop and ask the user.
   Changing the plan needs their approval.
+- **Review failure:** stop and report.
 
 ### 3. Implement
 
@@ -143,10 +148,13 @@ Run [review-fix-loop](../review-fix-loop/SKILL.md) in pipeline mode.
 ### 6. Gate B
 
 - **review-fix-loop stopped on an approach-level escalation:** stop and ask.
-- **It stopped because the gate failed:** stop and report, with no PR.
+- **It stopped because the gate or the review failed:** stop and report, with
+  no PR.
 - **Otherwise:** continue. Pass every valid finding not fixed at the cap and
   every escalation on to copilot-review-loop. They go first in the PR body
-  under "Needs human judgment", with blockers (P0 and P1) first.
+  under "Needs human judgment", with blockers (P0 and P1) first. When
+  copilot-review-loop reuses an existing draft, whose body it does not edit,
+  they go in its summary comment instead.
 
 ### 7. Copilot review
 

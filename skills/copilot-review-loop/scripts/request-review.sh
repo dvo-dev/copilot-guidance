@@ -71,7 +71,8 @@ while :; do
   requested_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   response=$(gh api -i -X POST "repos/$repo/pulls/$pr/copilot-code-review" \
     -f review_effort="$effort" 2>/dev/null || true)
-  status=$(printf '%s\n' "$response" | head -n 1 | awk '{ print $2 }')
+  # awk reads the whole response, so a large body can't SIGPIPE printf.
+  status=$(printf '%s\n' "$response" | awk 'NR == 1 { print $2 }')
   case $status in [0-9][0-9][0-9]) ;; *) status=0 ;; esac
   if { [ "$status" = 429 ] || [ "$status" = 503 ]; } && [ "$attempt" -lt 2 ]; then
     attempt=$((attempt + 1))

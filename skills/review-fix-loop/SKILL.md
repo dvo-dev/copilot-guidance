@@ -49,7 +49,9 @@ Fixes must stay within the scope the user or plan approved.
     other modified or untracked path exists, stop and ask; never commit it.
   - **Standalone:** list the uncommitted paths and confirm with the user before
     committing them as the baseline. Leave out any path the user does not
-    confirm.
+    confirm. If any path stays unconfirmed, stop and ask the user to commit,
+    move, or discard it: the gate and the review would otherwise run on a tree
+    that differs from the change.
 - Stage explicit paths only. Never use `git add -A`, `git add .`, or
   `git commit -a`.
 - Record the base SHA, head SHA, and check commands in `state.md`.
@@ -67,9 +69,11 @@ changed areas first, then the full unit suite.
   - Never stash, reset, or check out over the working tree to do this.
   - Record confirmed baseline failures. They are reported, not fixed.
 - Fix failures that the change caused before any review; a red gate wastes
-  reviewer effort. Once the gate is green, commit those repairs, and any
-  uncommitted repairs the run inherited, such as Gate A's in pipeline mode, by
-  explicit path as `Fix gate failures`. Then record the new head.
+  reviewer effort. When this is the initial gate, before the first review,
+  commit those repairs, and any uncommitted repairs the run inherited, such as
+  Gate A's in pipeline mode, by explicit path as `Fix gate failures`. Then
+  record the new head. Inside a fix cycle, leave gate repairs for the cycle
+  commit.
 - If the repository has no unit tests, run the strongest checks available and
   say so in the report.
 - Use the repository's documented tooling. Do not install new tools for the
@@ -95,6 +99,8 @@ the base to `HEAD`, with fresh reviewers and finding IDs `L<round>.<n>`.
 
 Take the first case that applies:
 
+- **Review failure:** adversarial-review returned no result because both
+  slots failed. Stop and report.
 - **Approach-level escalation:** the reviewers show that the plan or design
   itself cannot meet the requirement. Stop and report; do not patch around it.
 - **No fix items:** exit clean, and report any other escalations.
@@ -136,7 +142,8 @@ Escalate instead of spending another cycle when:
 
 Return to the caller or user:
 
-- the exit reason: clean, cap reached, escalation, or gate failure;
+- the exit reason: clean, cap reached, escalation, gate failure, or review
+  failure;
 - the reviews run and fix cycles used, and the models and efforts for each
   round, marking any degraded rounds;
 - the commands actually run and their results, including baseline failures;

@@ -84,8 +84,21 @@ while :; do
   # gh exits 8 while checks are pending and 1 when none are reported.
   out=$(gh pr checks "$pr" -R "$repo" --json name,bucket,state,link,workflow \
     --jq "$summary" 2>&1) || true
-  case $out in
-    *'no checks reported'*)
+  # Match the summary's exact first line before looking for the CLI's "no
+  # checks" diagnostic: a check name could contain that text, and CLI errors
+  # such as "failed to ..." must reach the error handler.
+  first=${out%%$'\n'*}
+  case $first in
+    pass | fail | pending | skipped) ;;
+    *)
+      case $out in
+        *'no checks reported'*) first=none ;;
+        *) die "could not read checks for $repo#$pr: $out" ;;
+      esac
+      ;;
+  esac
+  case $first in
+    none)
       if [ "$SECONDS" -ge "$grace_end" ]; then
         head_sha=$(gh pr view "$pr" -R "$repo" --json headRefOid --jq .headRefOid) ||
           die "could not read pull request $repo#$pr"
@@ -103,12 +116,11 @@ while :; do
         exit 31
       fi
       ;;
-    pass* | fail* | pending* | skipped*)
+    *)
       # Parameter expansion, not a pipe into head: a large summary would make
       # printf die of SIGPIPE under pipefail.
-      result=${out%%$'\n'*}
       json=${out#*$'\n'}
-      case $result in
+      case $first in
         pass | skipped)
           # Late checks can still register, so trust a result without
           # failures only after the grace period or at the deadline.
@@ -117,7 +129,7 @@ while :; do
             continue
           fi
           printf '%s\n' "$json"
-          [ "$result" = pass ] && exit 0
+          [ "$first" = pass ] && exit 0
           exit 33
           ;;
         fail)
@@ -130,7 +142,6 @@ while :; do
         exit 32
       fi
       ;;
-    *) die "could not read checks for $repo#$pr: $out" ;;
   esac
   sleep "$interval"
 done

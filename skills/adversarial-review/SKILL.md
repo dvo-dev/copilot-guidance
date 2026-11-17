@@ -231,16 +231,20 @@ evidence.
      not proof, and it does not raise severity. A finding from one slot is not
      noise; model diversity exists to surface it.
    - The parent usually wrote the code. Before rejecting a finding that you or
-     any reviewer rated P0 or P1, or a P2 finding that both slots raised or,
-     in `findings` mode, both judged valid, launch one
-     fresh validator with the validator brief in
+     any reviewer rated P0 or P1, or a finding that both slots raised or, in
+     `findings` mode, both judged valid, with either rating it P2 or higher,
+     launch one fresh validator with the validator brief in
      [reviewer-brief.md](reviewer-brief.md). Use the other provider's flagship
      at the reviewer effort, and give it only the finding, the cited locations,
      and the packet's Target section. Reject only if it refutes the finding.
-     If it upholds the finding, the finding is valid; still decide whether it
-     is worth fixing now. If it is uncertain, escalate a P0 or P1 finding with
-     the missing fact, and classify a P2 finding from your own check: reject
-     it as not established, or fix or defer it if you established it.
+     These rules use the highest rating from you or any reviewer, not only
+     your own.
+     - **P0 or P1:** if the validator upholds the finding or is uncertain,
+       classify it as fix or escalate. When uncertain, name the missing fact.
+     - **P2:** if it upholds the finding, the finding is valid; still decide
+       whether it is worth fixing now. If it is uncertain, decide from your
+       own check: reject it as not established, or fix or defer it if you
+       established it.
    - Never accept a finding only because a reviewer was confident, and never
      fix something just to appease a reviewer.
 6. **Record** each cluster in `ledger.md` as one table row, writing all of the
@@ -306,7 +310,8 @@ Ledger rows:
 | L1.2 | 1 | B | P2 | `retry.go:16` | Delay overflows for large `attempt` | reject | done | Not established: `config.go:22` limits retries to 5 | |
 | L1.3 | 1 | A | P1 | `sender.go:41` | Timeout retry can apply an event twice | fix | open | `TestRetryAfterAcceptedTimeout` sends twice | |
 
-The parent rated L1.2 P2 and only slot B raised it, so it needs no validator.
+Only slot B raised L1.2, and nobody rated it above P2, so it needs no
+validator.
 
 Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6-astra xhigh):
 2 fix (P1), 1 reject. A: incorrect. B: incorrect."
@@ -326,6 +331,7 @@ Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6-astra xhigh):
 | A reviewer's trigger needs a state that only a mock can create, because input validation rejects it | Reject as not established, citing the validation. Add no fallback for that state. |
 | A rare timeout after a remote write can apply a change twice | Keep it. Rare, credible data-integrity paths stay in scope without a production incident. |
 | A validator is uncertain about a P1 because it depends on how the service is deployed | Escalate with the specific deployment fact that is missing. |
+| A reviewer rated a finding P1, the parent rates it P2, and the validator is uncertain | The reviewer's P1 counts. Fix or escalate; do not reject it. |
 | A finding asks for a missing test, and no wrong behavior or repository test rule is named | Reject as not established. A missing test alone is not a defect. |
 | A valid finding needs a new option or layer, and the only caller does not need it | Defer, or fix it locally if a small fix keeps the contract. Do not add the layer. |
 | `HEAD`, the status, or the content fingerprint changed while the reviewers ran | Discard the round and run it once more. Stop and report if it happens again. |

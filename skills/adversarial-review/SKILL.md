@@ -236,8 +236,9 @@ evidence.
      launch one fresh validator with the validator brief in
      [reviewer-brief.md](reviewer-brief.md). Use the other provider's flagship
      at the reviewer effort, and give it only the finding, the cited locations,
-     and the packet's Target section. These rules use the highest rating from
-     you or any reviewer, not only your own.
+     the packet's Target section, and any Intent test requirement that the
+     finding relies on. These rules use the highest rating from you or any
+     reviewer, not only your own.
      - **P0 or P1:** reject only if the validator refutes the finding. If it
        upholds the finding or is uncertain, classify it as fix or escalate.
        When uncertain, name the missing fact.
@@ -334,7 +335,7 @@ Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6-astra xhigh):
 | A rare timeout after a remote write can apply a change twice | Keep it. Rare, credible data-integrity paths stay in scope without a production incident. |
 | A validator is uncertain about a P1 because it depends on how the service is deployed | Escalate with the specific deployment fact that is missing. |
 | A reviewer rated a finding P1, the parent rates it P2, and the validator is uncertain | The reviewer's P1 counts. Fix or escalate; do not reject it. |
-| A finding asks for a missing test, and no wrong behavior or repository test rule is named | Reject as not established. A missing test alone is not a defect. |
+| A finding asks for a missing test, and no wrong behavior, repository test rule, or Intent test requirement is named | Reject as not established. A missing test alone is not a defect. |
 | A valid finding needs a new option or layer, and the only caller does not need it | Defer, or fix it locally if a small fix keeps the contract. Do not add the layer. |
 | `HEAD`, the status, or the content fingerprint changed while the reviewers ran | Discard the round and run it once more. Stop and report if it happens again. |
 | The host has no OpenAI model available | Run slot A alone, label the round single-model (degraded), and report that. |

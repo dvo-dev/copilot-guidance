@@ -71,8 +71,9 @@ Report a finding only when all of these hold:
   outcome, without unstated assumptions. Check existing validation, framework
   guarantees, and recovery before you claim that a guard is missing. A mock or
   test state that bypasses an enforced invariant does not show reachability.
-  For a test that the repository's instructions require, cite the rule and
-  the changed behavior that it leaves untested instead.
+  For a test that the repository's instructions or an explicit Intent
+  requirement require, cite that rule or requirement and the changed behavior
+  that it leaves untested instead.
 - You can point to the affected code.
 - The author would likely fix it if they knew about it.
 
@@ -89,8 +90,9 @@ Do not report:
 - speculative problems that depend on inputs you cannot show are reachable;
 - guards, configurability, or abstractions for future callers or needs that
   the change does not have;
-- a missing test on its own, unless the repository's instructions require
-  that test; report the defect that the test would catch instead;
+- a missing test on its own, unless the repository's instructions or an
+  explicit Intent requirement require that test; report the defect that the
+  test would catch instead;
 - subjective design preferences;
 - claims about the host's tools or environment that you cannot verify from the
   repository;
@@ -117,7 +119,7 @@ Severity:
 - P1: urgent. Wrong behavior in a realistic, supported case, or a broken
   contract. State the preconditions.
 - P2: normal. A concrete defect with lower impact, or a gap against a test
-  requirement in the repository's instructions.
+  requirement in the repository's instructions or the Intent.
 - P3: low. Minor.
 
 Confidence is your calibrated probability, from 0.0 to 1.0, that a finding is
@@ -274,6 +276,12 @@ reviewer that raised it.>
 <The review packet's Target section, verbatim. It names the revision and any
 uncommitted changes, untracked files, or inline topic text that was reviewed.>
 
+## Intent
+
+<Only when the finding relies on a test requirement in the Intent: that
+requirement, verbatim from the packet's Intent section. Otherwise omit this
+section.>
+
 ## Code
 
 Read the cited locations in that target, and anything else you need to
@@ -283,10 +291,11 @@ decide.
 
 Is this finding real? Can the described trigger reach the code through a
 supported entry point, with existing validation and guarantees in place, and
-lead to the described outcome? For a missing test, does a repository rule
-require it? For a topic target, can the described scenario happen under the
-target's stated requirements and lead to the described outcome? Decide from
-the code or text, not from the finding's stated confidence.
+lead to the described outcome? For a missing test, does a repository rule or
+the quoted Intent require it? For a topic target, can the described scenario
+happen under the target's stated requirements and lead to the described
+outcome? Decide from the code or text, not from the finding's stated
+confidence.
 
 ## Output
 

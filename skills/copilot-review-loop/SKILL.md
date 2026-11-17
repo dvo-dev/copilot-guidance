@@ -314,7 +314,7 @@ pushed. Reply first, then resolve, and record each as it succeeds: State
 | --- | --- | --- |
 | fix (pushed) | `Fixed in <short-sha>:` what changed, and the test | `ADDRESSED` |
 | reject | `Not changing:` the evidence, with `path:line` | `INVALID` |
-| defer | `Deferred:` the reason and the follow-up | `WONT_FIX` |
+| defer | `Deferred:` the reason, and the follow-up if one was recorded | `WONT_FIX` |
 | valid, not fixed (the run stopped first) | `Valid; not fixed:` why, such as the stop condition that applied | Leave unresolved |
 | fix (committed, not pushed) | `Valid; fixed in <short-sha> but not pushed:` why the push was held back | Leave unresolved |
 | escalate | `Needs human input:` a concrete question | Leave unresolved |

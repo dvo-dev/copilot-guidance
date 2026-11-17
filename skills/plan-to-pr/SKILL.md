@@ -165,8 +165,8 @@ Run [review-fix-loop](../review-fix-loop/SKILL.md) in pipeline mode. Tell it
 which path the run is on, and pass the local fix cycles and the reviewer
 effort.
 
-- **Full path:** one simplification pass, then up to the local fix-cycle
-  setting.
+- **Full path:** one dual-model simplification pass, then up to the local
+  fix-cycle setting.
 - **Light path:** no simplification pass and one review. Fix cycles run only
   for blocking findings, never beyond the setting, and each fix is still
   re-reviewed.

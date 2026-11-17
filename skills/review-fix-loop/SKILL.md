@@ -2,8 +2,8 @@
 name: review-fix-loop
 description: >-
   Harden the current code change locally before a pull request. Runs the
-  repository's unit tests and fast checks first, then one behavior-preserving
-  simplification pass with surgical-refactoring, then iterates
+  repository's unit tests and fast checks first, then one behavior-preserving,
+  dual-model simplification pass with surgical-refactoring, then iterates
   adversarial-review, verification, test-first fixes, and commits for up to
   the configured number of fix cycles (1 to 3, default 3), with every fix
   re-reviewed by fresh reviewers. Stops early
@@ -127,13 +127,14 @@ Skip the pass, and record `simplify skipped: <reason>` in `state.md`, when:
 Otherwise:
 
 1. Set `In flight` to `simplify pass, head <sha>`.
-2. Launch one fresh subagent with
-   [adversarial-review](../adversarial-review/SKILL.md#1-choose-the-reviewer-models)'s
-   slot A model at the reviewer effort, both passed explicitly. If that model
-   is unavailable, use slot B's model and record the substitution. A fresh
-   context reads the diff as a new reviewer would; the author tends to defend
-   its own structure. Give it the base and head SHAs and the intent, but not
-   the reasons for the current design. Tell it to:
+2. Prepare one brief with the base and head SHAs and the intent, but not the
+   parent's reasons for the current design. Save it as `packets/simplify.md`
+   before launching either slot. Launch two fresh, independent subagents in
+   parallel, using the slot A and slot B models from
+   [adversarial-review](../adversarial-review/SKILL.md#1-choose-the-reviewer-models).
+   Pass each model and the resolved reviewer effort explicitly. Both receive
+   the same brief; neither may read the other slot's output, earlier reviews,
+   or session history. Do not edit the code while they run. Tell each to:
    - invoke [surgical-refactoring](../surgical-refactoring/SKILL.md) for
      analysis only, and no other skills or subagents;
    - stay read-only: no file edits, git state changes, builds, or tests;
@@ -142,8 +143,15 @@ Otherwise:
      duplicate it removes, the smaller design, and the contracts it keeps;
    - also list current structure that has a real reason to stay.
 
-   Save its output as `reviews/simplify.md` in the run directory.
-3. Verify each candidate against the code and its callers, then decide:
+   Save each raw output or failure as `reviews/simplify-A.md` or
+   `reviews/simplify-B.md`, including the model and effort used. On resume,
+   reuse the saved brief and results; launch only slots without a saved
+   result or recorded failure. If one slot is unavailable or fails, continue
+   with the other and label the pass **single-model (degraded)**. Never fill
+   both slots with one provider. If neither returns an analysis, stop and
+   report a review failure in the simplify pass, not `simplify no change`.
+3. Combine duplicate candidates, keeping their source slots. Verify each
+   candidate against the code and its callers, then decide:
    - **Apply** when it keeps every caller-visible contract: results, errors,
      side effects, and telemetry. To remove a guard, name the check that
      already prevents the state. A state that only a mock can create does not
@@ -154,6 +162,9 @@ Otherwise:
    - **Needs approval** when it needs a contract or scope change that the plan
      did not approve. Do not apply it.
 
+   Agreement is not evidence that a candidate is safe; a candidate from only
+   one slot is equally eligible. For conflicting alternatives, compare their
+   contracts and maintenance cost rather than combining incompatible edits.
    Record each decision and its reason in `reviews/simplify.md`.
 4. Apply the accepted candidates. Add each path to `In flight` before changing
    it. Tests from the base revision stay unchanged. A test that this change
@@ -247,9 +258,10 @@ or user:
   failure;
 - the settings used, the reviews run and fix cycles used, and the models and
   efforts for each round, marking any degraded rounds;
-- the simplify result: skipped with its reason, no change, or the commit with
-  `git diff --shortstat` from the base to the commit's parent and to the
-  commit, plus each candidate that needs approval, in one line each;
+- the simplify result: skipped with its reason, failed, no change, or the
+  commit with `git diff --shortstat` from the base to the commit's parent and
+  to the commit; include the models and efforts used, any degraded status,
+  and each candidate that needs approval, in one line each;
 - the commands actually run and their results, including baseline failures;
 - counts of fixed, rejected, deferred, escalated, and valid-but-not-fixed
   findings, with blocking items (P0 or P1) first;
@@ -277,11 +289,11 @@ count, take step 4; otherwise take step 5 for the latest round.
 This example describes no real system. A change adds pagination to a list
 endpoint, and `make test` is green.
 
-- **Simplify:** the subagent finds a `PageWindow` class that only one handler
-  uses and that only wraps two integers, and a `max_page_size` option that no
-  caller sets. Both removals keep every result and error the same. Inline the
-  class, remove the option and the test that this change added for it, run
-  the gate, and commit `Simplify implementation`.
+- **Simplify:** slot A finds a `PageWindow` class that only one handler uses
+  and that only wraps two integers. Slot B finds a `max_page_size` option
+  that no caller sets. Both removals keep every result and error the same.
+  Inline the class, remove the option and the test that this change added
+  for it, run the gate, and commit `Simplify implementation`.
 - **Round 1:**
   - L1.1, P1, both slots: an off-by-one error drops the last item when a page
     is full. Disposition: fix.
@@ -307,7 +319,11 @@ passes."
 | --- | --- |
 | A test fails on the change before any review | Fix it first. Review only a green change. |
 | The same test fails on the base revision | Confirm it in a temporary worktree, record it as a baseline failure, and continue. |
-| The simplify subagent finds a wrapper with one caller and no contract of its own | Inline it, run the gate, and commit `Simplify implementation` before the first review. |
+| One simplify slot finds a wrapper with one caller and no contract of its own; the other reports no candidates | Verify and inline it, run the gate, and commit `Simplify implementation` before the first review. Agreement is not required. |
+| Both simplify slots propose the same removal | Verify it once and record one decision with both source slots. |
+| The simplify slots propose incompatible designs | Compare the alternatives against the same contracts; do not apply both or choose by vote. |
+| One simplify slot is unavailable or fails | Use the other's analysis and report single-model (degraded). |
+| Neither simplify slot returns an analysis | Stop with a review failure, not a no-change result. |
 | Two adapters look duplicate, but each maps errors differently for its callers | Keep both and record the error mapping as the reason. |
 | A simplify candidate removes a guard because "the caller validates" | Apply it only after naming the check that prevents the state. Otherwise keep it. |
 | A simplify candidate would change the error type that callers see | Do not apply it. Report it as needing approval. |

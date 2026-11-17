@@ -155,12 +155,13 @@ stays unresolved.
      updates the review count, and copilot-review-loop records
      `review <k> triaged`.
 3. Finish the `In flight` step:
-   - A simplify pass: if step 2 found its commit, clear `In flight`. If
-     `reviews/simplify.md` is missing and no path is listed, run the pass
-     again. Otherwise keep its work only if every modified or untracked path
-     is on its list; if any is not, stop and ask, and never discard work.
-     Then finish the decisions in `reviews/simplify.md`, and run the gate and
-     commit as the loop describes.
+   - A simplify pass: if step 2 found its commit, clear `In flight`.
+     Otherwise keep its work only if every modified or untracked path is on
+     its list; if any is not, stop and ask, and never discard work. If
+     `reviews/simplify.md` is missing, finish the analysis using the saved
+     brief and slot results or failures as the loop describes; do not
+     relaunch completed slots. Then finish the decisions in
+     `reviews/simplify.md`, and run the gate and commit as the loop describes.
    - A round launched but not saved: run it again with fresh reviewers, using
      the saved packet if `HEAD` still matches its head, and otherwise a new
      packet. A round saved but not adjudicated: adjudicate the saved outputs.

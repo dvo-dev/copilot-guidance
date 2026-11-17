@@ -292,7 +292,7 @@ that file.
 3. Commit the explicit paths as `Address Copilot review findings (cycle <k>)`.
    The commit body lists only the finding IDs, for example
    `Findings: C1.1, C1.3`, as in
-   [review-fix-loop](../review-fix-loop/SKILL.md#5-fix-cycle). Set each fixed
+   [review-fix-loop](../review-fix-loop/SKILL.md#6-fix-cycle). Set each fixed
    finding's State to `committed <sha>`.
 4. Before pushing, confirm that the PR is still an open draft with
    `gh pr view <pr> -R OWNER/REPO --json state,isDraft`, and run the activity

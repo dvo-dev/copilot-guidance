@@ -2,7 +2,8 @@
 name: review-fix-loop
 description: >-
   Harden the current code change locally before a pull request. Runs the
-  repository's unit tests and fast checks first, then iterates
+  repository's unit tests and fast checks first, then one behavior-preserving
+  simplification pass with surgical-refactoring, then iterates
   adversarial-review, verification, test-first fixes, and commits for up to
   the configured number of fix cycles (1 to 3, default 3), with every fix
   re-reviewed by fresh reviewers. Stops early
@@ -18,8 +19,9 @@ Get a change to a state where the tests pass and no adjudicated review finding
 still needs a fix, or stop with an honest list of what is left. Two
 independent reviewers look for defects; the parent decides which are
 established and worth fixing. Tests and other deterministic checks run first
-and outrank any reviewer's opinion. Every fix gets a fresh review, so the loop
-never ends on unreviewed work.
+and outrank any reviewer's opinion. One simplification pass then removes
+structure the change does not need, so reviewers do not harden it. Every fix
+gets a fresh review, so the loop never ends on unreviewed work.
 
 Respect the host repository's instructions, safety rules, and approval gates.
 Fixes must stay within the scope the user or plan approved.
@@ -105,10 +107,68 @@ changed areas first, then the full unit suite.
   calls, are allowed.
 - **Checks integrity:** never weaken, skip, or delete tests. Never mark tests as
   expected failures, lower thresholds, disable lint rules, or edit CI
-  configuration to get green.
+  configuration to get green. The only exception is a test that the simplify
+  pass (step 3) removes together with the construct it tests.
 - If the gate cannot be made green, stop and report.
 
-## 3. Review and adjudicate
+## 3. Simplify once
+
+Agents often write more structure than a change needs, and reviewers then
+harden that structure. Before the first review, run one simplification pass,
+so that reviewers see the simpler code. Run it once per run, never in a fix
+cycle; step 6 has its own complexity check for each fix.
+
+Skip the pass, and record `simplify skipped: <reason>` in `state.md`, when:
+
+- the run is on the light path, or, in standalone mode, every changed path is
+  documentation, comments, or other non-executable text; or
+- the user or the plan says to skip it.
+
+Otherwise:
+
+1. Set `In flight` to `simplify pass, head <sha>`.
+2. Launch one fresh subagent with
+   [adversarial-review](../adversarial-review/SKILL.md#1-choose-the-reviewer-models)'s
+   slot A model at the reviewer effort, both passed explicitly. If that model
+   is unavailable, use slot B's model and record the substitution. A fresh
+   context reads the diff as a new reviewer would; the author tends to defend
+   its own structure. Give it the base and head SHAs and the intent, but not
+   the reasons for the current design. Tell it to:
+   - invoke [surgical-refactoring](../surgical-refactoring/SKILL.md) for
+     analysis only, and no other skills or subagents;
+   - stay read-only: no file edits, git state changes, builds, or tests;
+   - consider only code that this change adds or modifies;
+   - return each candidate's location, the concept, branch, layer, option, or
+     duplicate it removes, the smaller design, and the contracts it keeps;
+   - also list current structure that has a real reason to stay.
+
+   Save its output as `reviews/simplify.md` in the run directory.
+3. Verify each candidate against the code and its callers, then decide:
+   - **Apply** when it keeps every caller-visible contract: results, errors,
+     side effects, and telemetry. To remove a guard, name the check that
+     already prevents the state. A state that only a mock can create does not
+     justify the guard.
+   - **Keep** when the current structure has a real contract, such as an
+     adapter with its own error mapping; when the plan or intent requires it;
+     or when the candidate is only a style preference.
+   - **Needs approval** when it needs a contract or scope change that the plan
+     did not approve. Do not apply it.
+
+   Record each decision and its reason in `reviews/simplify.md`.
+4. Apply the accepted candidates. Add each path to `In flight` before changing
+   it. Tests from the base revision stay unchanged. A test that this change
+   added only for a removed construct, such as an option that no caller sets,
+   goes with that construct; record each one. Never remove a test because it
+   fails.
+5. Run the full gate (step 2). If a candidate makes it fail, reverse only that
+   candidate's edits, change its decision to keep, and run the gate again.
+6. Commit the explicit paths as `Simplify implementation`. Keep the reasons
+   in `reviews/simplify.md`, not in the commit message.
+   Set `Head`, record `simplify committed <sha>` in `state.md`, and clear
+   `In flight`. If no candidate was applied, record `simplify no change` and
+   clear `In flight`.
+
+## 4. Review and adjudicate
 
 Run [adversarial-review](../adversarial-review/SKILL.md) in `change` mode on
 the base to `HEAD`, with fresh reviewers and finding IDs `L<round>.<n>`. It
@@ -121,7 +181,7 @@ update the review count.
     new evidence.
   - A finding fixed earlier but raised again means the fix may be incomplete.
 
-## 4. Decide
+## 5. Decide
 
 Take the first case that applies:
 
@@ -139,7 +199,7 @@ Take the first case that applies:
   3. Exit without fixing anything.
 - **Otherwise:** start a fix cycle.
 
-## 5. Fix cycle
+## 6. Fix cycle
 
 Set `In flight` to `fix cycle <n> for <IDs>, touching <paths>`, and add each
 path to it before changing that file. For each fix item, highest severity
@@ -171,14 +231,14 @@ Then:
    ledger, because later reviewers read the commit range.
 3. Record the commit: set each fixed finding's State to `committed <sha>`,
    update `Head` and the fix-cycle count, and clear `In flight`.
-4. Return to step 3 for a fresh review.
+4. Return to step 4 for a fresh review.
 
 Escalate instead of spending another cycle when:
 
 - a finding still recurs after a second fix; or
 - the fix would change scope or behavior that the plan did not approve.
 
-## 6. Report
+## 7. Report
 
 Set the local loop to `done` with the exit reason, then return to the caller
 or user:
@@ -187,6 +247,9 @@ or user:
   failure;
 - the settings used, the reviews run and fix cycles used, and the models and
   efforts for each round, marking any degraded rounds;
+- the simplify result: skipped with its reason, no change, or the commit with
+  `git diff --shortstat` from the base to the commit's parent and to the
+  commit, plus each candidate that needs approval, in one line each;
 - the commands actually run and their results, including baseline failures;
 - counts of fixed, rejected, deferred, escalated, and valid-but-not-fixed
   findings, with blocking items (P0 or P1) first;
@@ -196,10 +259,11 @@ or user:
 
 When `state.md` shows the local loop `running`, follow
 [run state](../plan-to-pr/run-state.md#resume) first. It records steps that
-happened, and finishes an in-flight round or fix cycle; a finished fix cycle
-continues at step 3. With nothing in flight, run the gate (step 2). Then, if
-the review count equals the fix-cycle count, take step 3; otherwise take step
-4 for the latest round.
+happened, and finishes an in-flight simplify pass, round, or fix cycle; a
+finished simplify pass or fix cycle continues at step 4. With nothing in
+flight, run the gate (step 2). Then, if no review has run and no simplify
+result is recorded, take step 3; if the review count equals the fix-cycle
+count, take step 4; otherwise take step 5 for the latest round.
 
 ## Boundaries
 
@@ -213,6 +277,11 @@ the review count equals the fix-cycle count, take step 3; otherwise take step
 This example describes no real system. A change adds pagination to a list
 endpoint, and `make test` is green.
 
+- **Simplify:** the subagent finds a `PageWindow` class that only one handler
+  uses and that only wraps two integers, and a `max_page_size` option that no
+  caller sets. Both removals keep every result and error the same. Inline the
+  class, remove the option and the test that this change added for it, run
+  the gate, and commit `Simplify implementation`.
 - **Round 1:**
   - L1.1, P1, both slots: an off-by-one error drops the last item when a page
     is full. Disposition: fix.
@@ -228,7 +297,9 @@ endpoint, and `make test` is green.
   clean.
 
 Report: "Clean after 2 reviews and 1 of 3 fix cycles (claude-opus-5.5 xhigh,
-gpt-6-astra xhigh). Fixed L1.1 and L1.2; rejected L1.3. `make test` passes."
+gpt-6-astra xhigh). Simplify removed a single-use class and an unused option
+(180 to 142 added lines). Fixed L1.1 and L1.2; rejected L1.3. `make test`
+passes."
 
 ## Walkthrough cases
 
@@ -236,6 +307,11 @@ gpt-6-astra xhigh). Fixed L1.1 and L1.2; rejected L1.3. `make test` passes."
 | --- | --- |
 | A test fails on the change before any review | Fix it first. Review only a green change. |
 | The same test fails on the base revision | Confirm it in a temporary worktree, record it as a baseline failure, and continue. |
+| The simplify subagent finds a wrapper with one caller and no contract of its own | Inline it, run the gate, and commit `Simplify implementation` before the first review. |
+| Two adapters look duplicate, but each maps errors differently for its callers | Keep both and record the error mapping as the reason. |
+| A simplify candidate removes a guard because "the caller validates" | Apply it only after naming the check that prevents the state. Otherwise keep it. |
+| A simplify candidate would change the error type that callers see | Do not apply it. Report it as needing approval. |
+| The change edits only documentation, or the pipeline is on the light path | Skip the simplify pass and record the reason. |
 | Round 2 raises a finding rejected in round 1, with no new evidence | Keep it rejected and note the recurrence. |
 | L1.1 was fixed in cycle 1 and round 2 raises it again | Investigate the fix. If it still recurs after the next fix, escalate it. |
 | The last allowed fix cycle is done, such as the second with fix cycles set to 2 | Run the confirmation review, adjudicate it, report its fix items as valid but not fixed, and stop. |

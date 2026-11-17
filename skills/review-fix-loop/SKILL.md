@@ -153,7 +153,14 @@ first:
    tightly coupled consequence of the fix, such as a gap that the fix makes
    reachable, may be fixed in the same cycle; record it in the ledger under
    that finding.
-3. Run the targeted tests.
+3. Check the fix once for added complexity. Ask: "Did this fix add a concept,
+   branch, layer, or policy that the established defect did not require?"
+   Compare it with the diff and its callers. Remove only what is unnecessary
+   and in scope. Keep behavior the same, including edge inputs, errors, and
+   side effects. If removal would change a caller-visible contract, keep the
+   fix and note the concern in the ledger. Record the answer under the
+   finding. This is a single check, not a new review or loop.
+4. Run the targeted tests.
 
 Then:
 
@@ -233,6 +240,7 @@ gpt-6-astra xhigh). Fixed L1.1 and L1.2; rejected L1.3. `make test` passes."
 | L1.1 was fixed in cycle 1 and round 2 raises it again | Investigate the fix. If it still recurs after the next fix, escalate it. |
 | The last allowed fix cycle is done, such as the second with fix cycles set to 2 | Run the confirmation review, adjudicate it, report its fix items as valid but not fixed, and stop. |
 | "Review and fix this with 1 cycle at max" | Use 1 fix cycle and reviewer effort `max` without asking, for at most 2 reviews. |
+| A fix for a missing null check also adds a new helper class and a config option | Fail the complexity check. Remove the helper and option, keep the check, rerun the targeted tests, and record it. |
 | Reviewers show the design cannot meet the requirement | Escalate it as an approach-level problem and stop. |
 | A pipeline run finds an unrelated untracked file | Stop and ask. Never commit it. |
 | The session is reopened after the machine slept during fix cycle 2, with two edited files listed in `In flight` | Keep the edits, check each of the cycle's findings and finish any not yet fixed, then run the gate, commit cycle 2, record it, and continue with a fresh review. |

@@ -33,6 +33,21 @@ gh skill install dvo-dev/copilot-guidance --all --agent github-copilot --scope u
 `--force` overwrites local edits to these skills; save any changes first. Start a
 new agent session to load the updated skills.
 
+## Optional global instructions
+
+The [global instructions](.copilot/copilot-instructions.md) contain a writing
+preference. `gh skill install` and `gh skill update` do not install or update
+this file.
+
+For Copilot CLI, copy its text into `~/.copilot/copilot-instructions.md`, keeping
+any existing instructions. Start a new CLI session to load the change.
+
+For the GitHub Copilot app, copy the text into
+**Settings > Sessions > App instructions**.
+
+Apply this setup step on each new machine, and repeat it when you change the
+global instructions.
+
 ## Development pipeline
 
 Four skills turn an approved plan into a reviewed draft pull request and leave

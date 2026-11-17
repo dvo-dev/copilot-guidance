@@ -71,6 +71,8 @@ Report a finding only when all of these hold:
   outcome, without unstated assumptions. Check existing validation, framework
   guarantees, and recovery before you claim that a guard is missing. A mock or
   test state that bypasses an enforced invariant does not show reachability.
+  For a test that the repository's instructions require, cite the rule and
+  the changed behavior that it leaves untested instead.
 - You can point to the affected code.
 - The author would likely fix it if they knew about it.
 
@@ -281,10 +283,10 @@ decide.
 
 Is this finding real? Can the described trigger reach the code through a
 supported entry point, with existing validation and guarantees in place, and
-lead to the described outcome? For an inline topic target, can the described
-scenario happen under the target's stated requirements and lead to the
-described outcome? Decide from the code or text, not from the finding's stated
-confidence.
+lead to the described outcome? For a missing test, does a repository rule
+require it? For a topic target, can the described scenario happen under the
+target's stated requirements and lead to the described outcome? Decide from
+the code or text, not from the finding's stated confidence.
 
 ## Output
 

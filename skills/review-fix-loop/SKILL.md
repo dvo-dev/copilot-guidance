@@ -14,10 +14,12 @@ description: >-
 
 # Review-fix loop
 
-Get a change to a state that both the tests and two independent reviewers
-accept, or stop with an honest list of what is left. Tests and other
-deterministic checks run first and outrank any reviewer's opinion. Every fix
-gets a fresh review, so the loop never ends on unreviewed work.
+Get a change to a state where the tests pass and no adjudicated review finding
+still needs a fix, or stop with an honest list of what is left. Two
+independent reviewers look for defects; the parent decides which are
+established and worth fixing. Tests and other deterministic checks run first
+and outrank any reviewer's opinion. Every fix gets a fresh review, so the loop
+never ends on unreviewed work.
 
 Respect the host repository's instructions, safety rules, and approval gates.
 Fixes must stay within the scope the user or plan approved.
@@ -207,8 +209,10 @@ endpoint, and `make test` is green.
 - **Round 1:**
   - L1.1, P1, both slots: an off-by-one error drops the last item when a page
     is full. Disposition: fix.
-  - L1.2, P2, slot B: no test covers an empty page. Disposition: fix.
-  - L1.3, P3: a naming preference. Disposition: defer.
+  - L1.2, P2, slot B: a request for page 0 returns the first page twice,
+    because the handler treats 0 and 1 as the same page. Disposition: fix.
+  - L1.3, P2, slot A: no test covers an empty page, and the empty case
+    already returns an empty list. Disposition: reject (not established).
 - **Cycle 1:**
   1. Failing tests for L1.1 and L1.2, then the fixes.
   2. The gate is green.
@@ -217,7 +221,7 @@ endpoint, and `make test` is green.
   clean.
 
 Report: "Clean after 2 reviews and 1 of 3 fix cycles (claude-opus-5.5 xhigh,
-gpt-6-astra xhigh). Fixed L1.1 and L1.2; deferred L1.3. `make test` passes."
+gpt-6-astra xhigh). Fixed L1.1 and L1.2; rejected L1.3. `make test` passes."
 
 ## Walkthrough cases
 

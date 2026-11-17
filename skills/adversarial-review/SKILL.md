@@ -236,15 +236,15 @@ evidence.
      launch one fresh validator with the validator brief in
      [reviewer-brief.md](reviewer-brief.md). Use the other provider's flagship
      at the reviewer effort, and give it only the finding, the cited locations,
-     and the packet's Target section. Reject only if it refutes the finding.
-     These rules use the highest rating from you or any reviewer, not only
-     your own.
-     - **P0 or P1:** if the validator upholds the finding or is uncertain,
-       classify it as fix or escalate. When uncertain, name the missing fact.
-     - **P2:** if it upholds the finding, the finding is valid; still decide
-       whether it is worth fixing now. If it is uncertain, decide from your
-       own check: reject it as not established, or fix or defer it if you
-       established it.
+     and the packet's Target section. These rules use the highest rating from
+     you or any reviewer, not only your own.
+     - **P0 or P1:** reject only if the validator refutes the finding. If it
+       upholds the finding or is uncertain, classify it as fix or escalate.
+       When uncertain, name the missing fact.
+     - **P2:** if the validator refutes the finding, reject it. If it upholds
+       the finding, the finding is valid; still decide whether it is worth
+       fixing now. If it is uncertain, decide from your own check: reject it
+       as not established, or fix or defer it if you established it.
    - Never accept a finding only because a reviewer was confident, and never
      fix something just to appease a reviewer.
 6. **Record** each cluster in `ledger.md` as one table row, writing all of the
@@ -328,6 +328,7 @@ Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6-astra xhigh):
 | A loop passes five Copilot findings | Use `findings` mode with each finding's original text only, and adjudicate each verdict into a disposition. |
 | One slot returns no findings | That is a valid result. Adjudicate the other slot's findings normally. |
 | The parent wants to reject a P1 that both slots raised | Launch a fresh validator first. Reject only if it refutes the finding with evidence. |
+| Both slots raised a P2, and the validator is uncertain | Decide from your own check. Reject as not established if you could not establish it; do not fix it only because the validator could not refute it. |
 | A reviewer's trigger needs a state that only a mock can create, because input validation rejects it | Reject as not established, citing the validation. Add no fallback for that state. |
 | A rare timeout after a remote write can apply a change twice | Keep it. Rare, credible data-integrity paths stay in scope without a production incident. |
 | A validator is uncertain about a P1 because it depends on how the service is deployed | Escalate with the specific deployment fact that is missing. |

@@ -165,9 +165,11 @@ Run [review-fix-loop](../review-fix-loop/SKILL.md) in pipeline mode. Tell it
 which path the run is on, and pass the local fix cycles and the reviewer
 effort.
 
-- **Full path:** up to the local fix-cycle setting.
-- **Light path:** one review. Fix cycles run only for blocking findings, never
-  beyond the setting, and each fix is still re-reviewed.
+- **Full path:** one dual-model simplification pass, then up to the local
+  fix-cycle setting.
+- **Light path:** no simplification pass and one review. Fix cycles run only
+  for blocking findings, never beyond the setting, and each fix is still
+  re-reviewed.
 
 ### 6. Gate B
 
@@ -175,7 +177,8 @@ effort.
 - **It stopped because the gate or the review failed:** stop and report, with
   no PR.
 - **Otherwise:** continue. Pass every valid finding left unfixed, at the cap
-  or on the light path, and every escalation on to copilot-review-loop. They
+  or on the light path, every escalation, and every simplify candidate that
+  needs approval on to copilot-review-loop. They
   go first in the PR body under "Needs human judgment", with blockers (P0 and
   P1) first. When copilot-review-loop reuses an existing draft, whose body it
   does not edit, they go in its summary comment instead.
@@ -225,7 +228,8 @@ webhook sender", which has 4 todos.
    in-scope clarification, so the plan and Decision Log are updated.
 3. **Implement:** 4 todos, 4 commits, with targeted tests after each.
 4. **Gate A:** green apart from the baseline failure.
-5. **Local review:** clean after 2 reviews and 1 fix cycle.
+5. **Local review:** the simplification pass inlines a single-use helper,
+   then the loop is clean after 2 reviews and 1 fix cycle.
 6. **Gate B:** no blockers.
 7. **Copilot review:** draft PR #42 is clean after 2 Max reviews and 1 fix
    cycle. One escalation, C2.1, stays open.
@@ -246,7 +250,7 @@ webhook sender", which has 4 todos.
 | An autopilot session starts the pipeline with no settings | Use the defaults without asking. |
 | The user says "implement it without plan-to-pr" | Do not start. Implement normally. |
 | A fleet worker receives one todo from an approved plan | Do not start. The coordinating session runs the pipeline once. |
-| The plan only edits documentation | Take the light path: no plan review, one local review, and one Copilot review unless findings need more. |
+| The plan only edits documentation | Take the light path: no plan review, no simplification pass, one local review, and one Copilot review unless findings need more. |
 | The plan review says the approach cannot meet a requirement | Stop and ask before writing code. |
 | The plan has no acceptance criteria | Infer testable ones, record them as inferred, and continue. |
 | Gate A stays red on a failure that the change caused | Stop with no PR and report. |

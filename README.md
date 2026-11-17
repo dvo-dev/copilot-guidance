@@ -56,7 +56,7 @@ the final decision to a human:
 | Skill | What it does |
 | --- | --- |
 | `adversarial-review` | Has two isolated reviewers, the top Anthropic and top OpenAI models, independently review a change, plan, or batch of findings at the reasoning effort you choose. The agent verifies each finding before acting on it. |
-| `review-fix-loop` | Runs the unit tests and fast checks, then iterates review and test-first fixes for 1 to 3 fix cycles. Every fix is re-reviewed. |
+| `review-fix-loop` | Runs the unit tests and fast checks, then one dual-model simplification pass with `surgical-refactoring` that removes structure the change does not need, then iterates review and test-first fixes for 1 to 3 fix cycles. Every fix is re-reviewed. |
 | `copilot-review-loop` | Opens a draft pull request and iterates with Copilot code review for 1 to 3 fix cycles. It triages findings with `adversarial-review`, fixes CI failures, replies to and resolves threads, requests a review of the final push without waiting for it, and posts a summary for human reviewers. |
 | `plan-to-pr` | Chains the others: plan review, implementation, the local loop, a draft pull request, the Copilot loop, and a handoff. It passes your settings to each skill. |
 

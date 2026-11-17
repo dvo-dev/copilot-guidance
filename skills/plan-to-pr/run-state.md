@@ -57,7 +57,7 @@ laptop, a restart, or a stopped turn, without repeating or skipping a step.
 - Settings: reviewer effort <level>, Copilot review effort <level>, local fix cycles <N>, PR fix cycles <M>
 - Base: <branch> @ <sha> · Head: <sha> · PR: <url or none>
 - Checks: <commands> · Baseline failures: <list or none>
-- Local loop: <not started | running | done: exit reason> · reviews <n> · fix cycles <n>/<N>
+- Local loop: <not started | running | done: exit reason> · simplify <not run | skipped: reason | no change | committed <sha>> · reviews <n> · fix cycles <n>/<N>
 - PR loop: <not started | running | done: exit reason> · reviews <n> · fix cycles <n>/<M> · last Copilot review <ID or none>
 - Pushed by this run: <short SHAs, or none>
 - Final review: <effort and head, or none>
@@ -73,6 +73,9 @@ laptop, a restart, or a stopped turn, without repeating or skipping a step.
 `Head` is the latest commit this run recorded. `In flight` names a step that
 must not run twice, from just before it starts until its result is recorded:
 
+- `simplify pass, head <sha>, touching <paths>`. Add each path before
+  changing it. Cleared when the pass's commit, or `simplify no change`, is
+  recorded.
 - `round L2 launched, packets/L2.md, head <sha>`, then `round L2 saved` once
   both raw outputs are saved. Cleared when the round's ledger rows are
   written.
@@ -131,10 +134,10 @@ stays unresolved.
 
 1. Read `state.md` and `ledger.md`. Confirm that the current branch is the
    run's branch, and that `HEAD` is the recorded head or follows it only
-   through commits this run made, such as a fix-cycle commit or a
-   `Fix gate failures` commit. When resuming a loop, also confirm that every
-   modified or untracked path is on the list of a fix cycle in flight.
-   Otherwise stop and ask.
+   through commits this run made, such as a `Simplify implementation` commit,
+   a fix-cycle commit, or a `Fix gate failures` commit. When resuming a loop,
+   also confirm that every modified or untracked path is on the list of the
+   simplify pass or fix cycle in flight. Otherwise stop and ask.
 2. Record steps that happened but were not recorded, in order: a step counts
    only once the finding's earlier steps are recorded.
    - `committed`: a commit after the recorded head whose body lists the
@@ -145,11 +148,20 @@ stays unresolved.
      `review-threads.sh`.
    - `resolved`: the thread is resolved. A thread that someone else resolved
      before this run replied does not advance the State.
+   - A finished simplify pass: a `Simplify implementation` commit after the
+     recorded head. Record `simplify committed <sha>` and the new head.
    - A finished round: if the ledger has a round's rows that the loop has not
      recorded, record them as the loop does after a round: review-fix-loop
      updates the review count, and copilot-review-loop records
      `review <k> triaged`.
 3. Finish the `In flight` step:
+   - A simplify pass: if step 2 found its commit, clear `In flight`.
+     Otherwise keep its work only if every modified or untracked path is on
+     its list; if any is not, stop and ask, and never discard work. If
+     `reviews/simplify.md` is missing, finish the analysis using the saved
+     brief and slot results or failures as the loop describes; do not
+     relaunch completed slots. Then finish the decisions in
+     `reviews/simplify.md`, and run the gate and commit as the loop describes.
    - A round launched but not saved: run it again with fresh reviewers, using
      the saved packet if `HEAD` still matches its head, and otherwise a new
      packet. A round saved but not adjudicated: adjudicate the saved outputs.

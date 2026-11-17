@@ -292,7 +292,7 @@ that file.
 3. Commit the explicit paths as `Address Copilot review findings (cycle <k>)`.
    The commit body lists only the finding IDs, for example
    `Findings: C1.1, C1.3`, as in
-   [review-fix-loop](../review-fix-loop/SKILL.md#5-fix-cycle). Set each fixed
+   [review-fix-loop](../review-fix-loop/SKILL.md#6-fix-cycle). Set each fixed
    finding's State to `committed <sha>`.
 4. Before pushing, confirm that the PR is still an open draft with
    `gh pr view <pr> -R OWNER/REPO --json state,isDraft`, and run the activity
@@ -314,7 +314,7 @@ pushed. Reply first, then resolve, and record each as it succeeds: State
 | --- | --- | --- |
 | fix (pushed) | `Fixed in <short-sha>:` what changed, and the test | `ADDRESSED` |
 | reject | `Not changing:` the evidence, with `path:line` | `INVALID` |
-| defer | `Deferred:` the reason and the follow-up | `WONT_FIX` |
+| defer | `Deferred:` the reason, and the follow-up if one was recorded | `WONT_FIX` |
 | valid, not fixed (the run stopped first) | `Valid; not fixed:` why, such as the stop condition that applied | Leave unresolved |
 | fix (committed, not pushed) | `Valid; fixed in <short-sha> but not pushed:` why the push was held back | Leave unresolved |
 | escalate | `Needs human input:` a concrete question | Leave unresolved |

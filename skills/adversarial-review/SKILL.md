@@ -213,25 +213,40 @@ evidence.
    trigger. When the caller will fix the finding, prefer a failing test as the
    proof.
 4. **Classify** each cluster, and set its severity from your own verification
-   rather than from either slot:
-   - **fix:** verified or highly plausible, in scope, and worth changing now.
-   - **reject:** disproved. Cite the code (`path:line`) or fact that disproves
-     it.
-   - **defer:** valid but low value or out of scope. Record a follow-up.
+   rather than from either slot. Decide separately whether the defect is
+   established and whether a fix is worth it now. Weigh the smallest fix that
+   keeps the contracts against what it adds: branches, state, layers, places
+   that hold policy, and review effort for humans.
+   - **fix:** established, in scope, and worth changing now.
+   - **reject:** disproved, or not established after a scoped check of the
+     trigger. Record which one, and cite the code (`path:line`) or fact. Not
+     established does not mean impossible.
+   - **defer:** valid but low value or out of scope. Record a follow-up only
+     when a real condition would make it worth doing.
    - **escalate:** needs human judgment, such as a product or approach
-     decision, an ambiguous requirement, or a risk that cannot be verified.
+     decision, an ambiguous requirement, or a consequential risk that cannot
+     be verified. Name the missing fact or decision.
 5. **Guard against bias.**
-   - Agreement between slots raises priority, but it is not proof. A finding
-     from one slot is not noise; model diversity exists to surface it.
+   - Agreement between slots can move a finding earlier in your checks. It is
+     not proof, and it does not raise severity. A finding from one slot is not
+     noise; model diversity exists to surface it.
    - The parent usually wrote the code. Before rejecting a finding that you or
-     any reviewer rated P0 or P1, or any finding both slots raised or, in
-     `findings` mode, both judged valid, launch one
-     fresh validator with the validator brief in
+     any reviewer rated P0 or P1, or a finding that both slots raised or, in
+     `findings` mode, both judged valid, with either rating it P2 or higher,
+     launch one fresh validator with the validator brief in
      [reviewer-brief.md](reviewer-brief.md). Use the other provider's flagship
      at the reviewer effort, and give it only the finding, the cited locations,
-     and the packet's Target section. Reject only if it
-     refutes the finding. If it upholds the finding or is uncertain, classify
-     it as fix or escalate.
+     the packet's Target section, and any Intent test requirement that the
+     finding relies on. These rules use the highest rating from you or any
+     reviewer, not only your own.
+     - **P0 or P1:** reject only if the validator refutes the finding. If it
+       upholds the finding or is uncertain, classify it as fix or escalate.
+       When uncertain, name the missing fact.
+     - **P2:** if the validator refutes the finding, reject it. If it upholds
+       the finding, the finding is valid; still decide whether it is worth
+       fixing now. If it is uncertain, decide from your own check: reject it
+       as not established, fix or defer it if you established it, or
+       escalate it if it turns on a missing requirement or decision.
    - Never accept a finding only because a reviewer was confident, and never
      fix something just to appease a reviewer.
 6. **Record** each cluster in `ledger.md` as one table row, writing all of the
@@ -278,19 +293,30 @@ helper and calls it from a webhook sender.
 
 - Slot A reports a P1 finding with confidence 0.8: `attempt` starts at 0, so
   the first retry waits 0 ms and floods the receiver.
-- Slot B reports the same root cause, plus a P3 naming nit.
-- The parent reads the helper and confirms the off-by-one error with a failing
-  test.
+- Slot B reports the same root cause. It also reports a P2: `retryDelay`
+  overflows when `attempt` is above 62, and asks for a clamp.
+- Slot A also reports a P1: when a send times out after the receiver accepted
+  it, the retry resends the event with no idempotency key, so the receiver
+  applies one payment twice. This is rare, but the receiver's API supports
+  timeouts after a write.
+- The parent confirms the off-by-one error with a failing test. It finds that
+  config validation limits retries to 5 (`config.go:22`), so the overflow is
+  not established. It confirms the duplicate-send path with a test that
+  simulates a timeout after a write.
 
 Ledger rows:
 
 | ID | Round | Source | Sev | Location | Summary | Disposition | State | Evidence | Link |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | L1.1 | 1 | both | P1 | `retry.go:14` | First retry has zero delay | fix | open | `TestRetryDelayStartsAtBase` fails | |
-| L1.2 | 1 | B | P3 | `retry.go:9` | Rename `attempt` to `retryCount` | defer | done | Naming preference | |
+| L1.2 | 1 | B | P2 | `retry.go:16` | Delay overflows for large `attempt` | reject | done | Not established: `config.go:22` limits retries to 5 | |
+| L1.3 | 1 | A | P1 | `sender.go:41` | Timeout retry can apply an event twice | fix | open | `TestRetryAfterAcceptedTimeout` sends twice | |
+
+Only slot B raised L1.2, and nobody rated it above P2, so it needs no
+validator.
 
 Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6-astra xhigh):
-1 fix (P1), 1 defer. A: incorrect. B: incorrect."
+2 fix (P1), 1 reject. A: incorrect. B: incorrect."
 
 ## Walkthrough cases
 
@@ -304,6 +330,13 @@ Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6-astra xhigh):
 | A loop passes five Copilot findings | Use `findings` mode with each finding's original text only, and adjudicate each verdict into a disposition. |
 | One slot returns no findings | That is a valid result. Adjudicate the other slot's findings normally. |
 | The parent wants to reject a P1 that both slots raised | Launch a fresh validator first. Reject only if it refutes the finding with evidence. |
+| Both slots raised a P2, and the validator is uncertain | Decide from your own check. Reject as not established if you could not establish it, or escalate if it turns on a missing requirement; do not fix it only because the validator could not refute it. |
+| A reviewer's trigger needs a state that only a mock can create, because input validation rejects it | Reject as not established, citing the validation. Add no fallback for that state. |
+| A rare timeout after a remote write can apply a change twice | Keep it. Rare, credible data-integrity paths stay in scope without a production incident. |
+| A validator is uncertain about a P1 because it depends on how the service is deployed | Escalate with the specific deployment fact that is missing. |
+| A reviewer rated a finding P1, the parent rates it P2, and the validator is uncertain | The reviewer's P1 counts. Fix or escalate; do not reject it. |
+| A finding asks for a missing test, and no wrong behavior, repository test rule, or Intent test requirement is named | Reject as not established. A missing test alone is not a defect. |
+| A valid finding needs a new option or layer, and the only caller does not need it | Defer, or fix it locally if a small fix keeps the contract. Do not add the layer. |
 | `HEAD`, the status, or the content fingerprint changed while the reviewers ran | Discard the round and run it once more. Stop and report if it happens again. |
 | The host has no OpenAI model available | Run slot A alone, label the round single-model (degraded), and report that. |
 | An agent's prompt contains a review packet | That agent is a reviewer. It follows the packet and never invokes this skill. |

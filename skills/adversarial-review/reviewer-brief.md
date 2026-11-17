@@ -281,8 +281,10 @@ decide.
 
 Is this finding real? Can the described trigger reach the code through a
 supported entry point, with existing validation and guarantees in place, and
-lead to the described outcome? Decide from the code or text, not from the
-finding's stated confidence.
+lead to the described outcome? For an inline topic target, can the described
+scenario happen under the target's stated requirements and lead to the
+described outcome? Decide from the code or text, not from the finding's stated
+confidence.
 
 ## Output
 

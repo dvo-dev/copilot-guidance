@@ -66,10 +66,17 @@ Report a finding only when all of these hold:
 - The change introduced it, or made an existing problem reachable or worse.
   Pre-existing problems are out of scope.
 - It is discrete and actionable.
-- You can describe a concrete trigger: an input or state that leads to a wrong
-  outcome, without unstated assumptions.
+- You can describe a concrete trigger: a supported entry point or boundary,
+  and an input or state that reaches the code through it and leads to a wrong
+  outcome, without unstated assumptions. Check existing validation, framework
+  guarantees, and recovery before you claim that a guard is missing. A mock or
+  test state that bypasses an enforced invariant does not show reachability.
 - You can point to the affected code.
 - The author would likely fix it if they knew about it.
+
+A production incident is not required. Credible security, data-integrity,
+concurrency, and dependency-failure paths stay in scope even when they are
+rare.
 
 Do not report:
 
@@ -78,6 +85,10 @@ Do not report:
   that breaks the build or the behavior is reportable even if a tool could
   catch it;
 - speculative problems that depend on inputs you cannot show are reachable;
+- guards, configurability, or abstractions for future callers or needs that
+  the change does not have;
+- a missing test on its own, unless the repository's instructions require
+  that test; report the defect that the test would catch instead;
 - subjective design preferences;
 - claims about the host's tools or environment that you cannot verify from the
   repository;
@@ -88,7 +99,8 @@ of files, not a change. Read "the change" above as the target: report problems
 in it whether or not code exists yet, including problems already present in
 named files, and point to a section, step, or file instead of affected code.
 Report flaws, contradictions, risks, missing requirements, and infeasible
-steps, each with a concrete scenario of what happens and what goes wrong.>
+steps, each with a concrete scenario of what happens and what goes wrong. Use
+a scenario that the target's stated requirements allow.>
 <Findings mode only (delete in other modes): Judge each listed finding on its
 own merits. A finding can be valid but not worth addressing. Return exactly one
 assessment per input ID, using `uncertain` when the evidence is thin; the 0.5
@@ -97,14 +109,24 @@ problems only if they are P0 or P1.>
 
 Severity:
 
-- P0: drop everything. Security, data loss, crash or outage, or a broken build.
-- P1: urgent. Wrong behavior in a realistic case, or a broken contract.
-- P2: normal. An edge case, or a missing test for changed behavior.
+- P0: drop everything. A credible security hole, data loss, crash or outage,
+  or a broken build. State the affected scope; a category name alone is not
+  enough.
+- P1: urgent. Wrong behavior in a realistic, supported case, or a broken
+  contract. State the preconditions.
+- P2: normal. A concrete defect with lower impact, or a gap against a test
+  requirement in the repository's instructions.
 - P3: low. Minor.
 
 Confidence is your calibrated probability, from 0.0 to 1.0, that a finding is
-real. Omit findings below 0.5. Returning no findings is a valid and expected
-result. Do not pad.
+real. It is not severity, and it is not how often the problem occurs. Omit
+findings below 0.5. Returning no findings is a valid and expected result. Do
+not pad.
+
+For each finding, `trigger` names the entry point and preconditions, `impact`
+names the actual consequence, and `suggested_fix` is the smallest change that
+keeps the existing contracts. Do not propose a new layer, option, or
+framework when a local fix is enough.
 
 ## Output
 
@@ -172,7 +194,7 @@ Findings to assess:
       "impact": "Wrong outcome that results",
       "evidence": ["path:line and what it shows"],
       "suggested_fix": "Smallest change that fixes it",
-      "suggested_test": "A test that fails today"
+      "suggested_test": "A test that fails today, or empty if none is practical"
     }
   ],
   "not_reviewed": ["Area you could not review, and why"]
@@ -257,9 +279,10 @@ decide.
 
 ## Question
 
-Is this finding real? Can the described trigger happen in the target and lead
-to the described outcome? Decide from the code or text, not from the finding's
-stated confidence.
+Is this finding real? Can the described trigger reach the code through a
+supported entry point, with existing validation and guarantees in place, and
+lead to the described outcome? Decide from the code or text, not from the
+finding's stated confidence.
 
 ## Output
 

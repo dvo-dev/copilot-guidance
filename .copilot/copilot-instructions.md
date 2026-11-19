@@ -18,7 +18,6 @@ Apply this before you write the first implementation plan for a code change that
 - For the recommended option and each reuse option, check real callers, automatic retries, authorization, impact, reversibility, and recovery. A different ingress can change the risk, but it does not remove mandatory safety, authorization, or isolation controls.
 - Put an "Alternatives" section before the task list. Show only real options; do not add options to reach a number. If the recommendation needs a requirement change, ask me before implementation.
 - In a kickoff, quote my request and do not prescribe an architecture that I did not ask for. Tell the planning session to do these steps.
-- When you write a pull request description, use `/visual-explanations` to make it clear and easy for people to read.
 
 ```markdown
 ## Alternatives
@@ -27,3 +26,7 @@ Searched: <queries and paths>
 Recommendation: <option>, because <reason>.
 Decision needed: <each "reuse, changed requirements" option and its changes, or none>.
 ```
+
+## Pull request descriptions
+
+- When you write a pull request description, use `/visual-explanations` to make it clear and easy for people to read.

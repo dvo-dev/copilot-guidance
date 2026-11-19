@@ -2,9 +2,10 @@
 name: pr-descriptions
 description: >-
   Write or restructure a pull request description that people can scan: a
-  one- or two-sentence summary of the change's effect first, then what
-  changed, open questions with their owners, and required steps, with
-  supporting detail and decisions already made in named collapsed blocks.
+  one- or two-sentence summary of the change's effect, then the main flow
+  diagram and the business cases, then what changed, open questions with
+  their owners, and required steps, with supporting detail and a table of
+  decisions already made in named collapsed blocks.
   Builds on the repository's PR template when one exists, and always uses
   visual-explanations for diagrams, tables, and alerts. Use when writing,
   updating, or restructuring a pull request description, including the draft
@@ -53,14 +54,20 @@ the order; see [PR template](#pr-template).
      backoff. Deliveries that fail with a 4xx status still fail at once."
 2. **Pointer to open items**, when there are any: one line that gives their
    number and links to the section that lists them.
-3. **What changed and why**, as a short list with exact names (files,
+3. **Main flow diagram**, when the change adds or alters a flow, such as a
+   request, event, or code path: one diagram that shows the flow and where
+   the change acts.
+4. **Business cases**, when the change gives different results for different
+   inputs: one table of examples, such as users, plans, or requests, with the
+   result for each.
+5. **What changed and why**, as a short list with exact names (files,
    sections, functions, settings).
-4. **Open items** that need a person, such as Needs human judgment. Give each
+6. **Open items** that need a person, such as Needs human judgment. Give each
    one visible line: what to decide, who decides, and what the PR does until
    then.
-5. **Testing, review, and how the change was produced**, each kept short.
+7. **Testing, review, and how the change was produced**, each kept short.
 
-Do not add empty sections of your own.
+Items 1 to 4 are the opening. Do not add empty sections of your own.
 
 ## PR template
 
@@ -75,10 +82,9 @@ When a template exists, build the body on it:
 
 - Keep its headings, with the same text and level, in their order. Do not
   rename, merge, or reorder them.
-- Put the summary and the pointer as the first lines of the first section
-  when that section asks what the change does or why, such as "Summary",
-  "Description", or "What are you trying to accomplish?". Otherwise, put
-  them above the first heading.
+- Put the opening at the start of the first section when that section asks
+  what the change does or why, such as "Summary", "Description", or "What
+  are you trying to accomplish?". Otherwise, put it above the first heading.
 - Put each other item under the section that matches it best, and open items
   under the section for reviewer attention, if there is one. Put items that
   match no section after the template.
@@ -92,30 +98,32 @@ When a template exists, build the body on it:
 
 ## Visible and collapsed
 
-- **Keep visible** what a reviewer needs on the first read, in one or two
-  lines for each point: the summary, what changed, open questions and open
-  risks with their owners, and steps that a person must do, such as a deploy
-  order.
+- **Keep visible** what a reviewer needs on the first read: the opening, what
+  changed, open questions and open risks with their owners, and steps that a
+  person must do, such as a deploy order. Apart from the main flow diagram and
+  the business cases, keep each point to one or two lines.
 - **Collapse supporting detail** into `<details>` blocks: the reasons and
   evidence for a point, decisions already made (including accepted risks),
-  diagrams, case tables, file lists, test output, and review history.
-  Collapse a part only when it is longer than about five lines; leave shorter
-  parts visible, so a small PR often has no collapsed blocks.
+  other diagrams and case tables, file lists, test output, and review
+  history. Collapse a part only when it is longer than about five lines;
+  leave shorter parts visible, so a small PR often has no collapsed blocks.
 - Put each block under the heading that it supports, and give its
-  `<summary>` a name that tells what is inside, such as "Retry flow: where a
-  delivery stops". Put decisions already made in one block whose `<summary>`
-  lists their topics, such as "Decisions already made: retry limit, backoff,
-  4xx handling".
-- **Never collapse** an open question, open risk, required step, or alert,
-  even in a long list: shorten each item to one line, and collapse only its
-  supporting detail.
+  `<summary>` a name that tells what is inside, such as "Retry timing: delay
+  before each attempt". Put decisions already made in one block whose
+  `<summary>` lists their topics, such as "Decisions already made: retry
+  limit, backoff, 4xx handling". In that block, use a table with one row for
+  each decision: the question, the decision, and why.
+- **Never collapse** the main flow diagram, the business cases, an open
+  question, an open risk, a required step, or an alert, at any length.
+  Shorten each list item to one line, and collapse only its supporting
+  detail.
 
 Put a blank line after `</summary>` and before `</details>`, or the Markdown
 inside does not render:
 
 ```markdown
 <details>
-<summary>Retry flow: where a delivery stops</summary>
+<summary>Retry timing: delay before each attempt</summary>
 
 (diagram or table)
 
@@ -136,23 +144,29 @@ inside does not render:
 This example describes no real system. A draft PR adds retries to a webhook
 sender, and one question is open:
 
-```markdown
+````markdown
 Failed webhook deliveries now retry up to three times with backoff.
 Deliveries that fail with a 4xx status still fail at once.
 
 [1 open question](#needs-human-judgment): set the retry limit per endpoint?
 
+```text
+Deliver(payload)
+  |-- 2xx             -> done
+  |-- 4xx             -> fail at once
+  `-- timeout or 5xx  -> retry with backoff, at most 3 times -> then fail
+```
+
+| Delivery result | Before | After |
+| --- | --- | --- |
+| 2xx | Done | Done |
+| 4xx | Fails at once | Fails at once |
+| Timeout or 5xx | Fails at once | Retries up to 3 times |
+
 ## What changed and why
 
 - `sender.Deliver` retries timeouts and 5xx responses with jittered backoff.
 - New setting `webhooks.max_retries`, default 3.
-
-<details>
-<summary>Retry flow: where a delivery stops</summary>
-
-(decision tree)
-
-</details>
 
 ## Needs human judgment
 
@@ -162,26 +176,29 @@ Deliveries that fail with a 4xx status still fail at once.
 <details>
 <summary>Decisions already made: backoff, 4xx handling</summary>
 
-(one line each, with its reason)
+| Question | Decision | Why |
+| --- | --- | --- |
+| Backoff shape? | Jittered exponential | Spreads retries after an outage |
+| Retry a 4xx? | No | The receiver rejected the request |
 
 </details>
 
 ## Testing
 
 `go test ./sender/...` passed.
-```
+````
 
 ## Walkthrough cases
 
 | Input | Expected behavior |
 | --- | --- |
 | Any PR description | Invoke visual-explanations as well, before writing. |
-| Long PR with flows, case tables, and test logs | Start with a summary of the effect. Keep open questions, open risks, and required steps visible; put each flow, table, and log in a named `<details>` block. |
-| Many decisions already made and one open question | The pointer and the open-items section show the one open question. The decisions go in one block whose title lists their topics. |
-| The repository has a PR template, and one question is open | Put the summary and the pointer as the first lines of the template's first section when it asks what the change does or why. Keep every heading in order, and put the open question under the section for reviewer attention. |
-| The template's first section is a checklist | Put the summary and the pointer above the first heading. Keep the checklist, and check only the items that the inputs confirm. |
+| Long PR with flows, case tables, and test logs | Open with the summary, the pointer, the main flow diagram, and the business cases, all visible. Keep open questions, open risks, and required steps visible; put other flows, tables, and logs in named `<details>` blocks. |
+| Many decisions already made and one open question | The pointer and the open-items section show the one open question. The decisions go in one block whose title lists their topics, as a table: question, decision, and why. |
+| The repository has a PR template, and one question is open | Put the opening at the start of the template's first section when it asks what the change does or why. Keep every heading in order, and put the open question under the section for reviewer attention. |
+| The template's first section is a checklist | Put the opening above the first heading. Keep the checklist, and check only the items that the inputs confirm. |
 | A template comment says to delete a section that does not apply | If the section does not apply, delete it and its comment as told. If it applies, fill it. |
 | A template section does not apply, and the template gives no instruction | Keep the heading and write "N/A" with a short reason. |
 | The repository has several templates in `PULL_REQUEST_TEMPLATE/` | Use the one that fits the change, and say which one you used. |
-| Small documentation-only PR | Write a short summary and a few lines, with no collapsed blocks or empty sections. |
+| Small documentation-only PR | Write a short summary and a few lines. Add a flow diagram or business cases only when the change has them; add no collapsed blocks or empty sections. |
 | The inputs give no owner for an open item | Say that no owner is recorded; do not invent one. |

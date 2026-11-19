@@ -3,10 +3,10 @@ name: pr-descriptions
 description: >-
   Write or restructure a pull request description that people can scan: a
   one- or two-sentence summary of the change's effect, then the main flow
-  diagram and the business cases, then what changed, open questions, and
-  required steps, with supporting detail and a table of decisions already
-  made in named collapsed blocks. Questions for a named person go in a PR
-  comment, not the body.
+  diagram, with the business cases collapsed right after it, then what
+  changed, open questions, and required steps, with supporting detail and a
+  table of decisions already made in named collapsed blocks. Questions for a
+  named person go in a PR comment, not the body.
   Builds on the repository's PR template when one exists, and always uses
   visual-explanations for diagrams, tables, and alerts. Use when writing,
   updating, or restructuring a pull request description, including the draft
@@ -58,7 +58,8 @@ the order; see [PR template](#pr-template).
    the change acts.
 3. **Business cases**, when the change gives different results for different
    inputs: one table of examples, such as users, plans, or requests, with the
-   result for each.
+   result for each. Put it right after the flow diagram, in a collapsed block
+   unless it is about five lines or shorter.
 4. **What changed and why**, as a short list with exact names (files,
    sections, functions, settings).
 5. **Open items** that need a person, such as Needs human judgment. Give each
@@ -106,25 +107,25 @@ When a template exists, build the body on it:
 
 ## Visible and collapsed
 
-- **Keep visible** what a reviewer needs on the first read: the opening, what
-  changed, open questions and open risks, and steps that a person must do,
-  such as a deploy order. Apart from the main flow diagram and the business
-  cases, keep each point to one or two lines.
-- **Collapse supporting detail** into `<details>` blocks: the reasons and
-  evidence for a point, decisions already made (including accepted risks),
-  other diagrams and case tables, file lists, test output, and review
-  history. Collapse a part only when it is longer than about five lines;
-  leave shorter parts visible, so a small PR often has no collapsed blocks.
+- **Keep visible** what a reviewer needs on the first read: the summary, the
+  main flow diagram, what changed, open questions and open risks, and steps
+  that a person must do, such as a deploy order. Apart from the main flow
+  diagram, keep each point to one or two lines.
+- **Collapse supporting detail** into `<details>` blocks: the business cases,
+  the reasons and evidence for a point, decisions already made (including
+  accepted risks), other diagrams and case tables, file lists, test output,
+  and review history. Collapse a part only when it is longer than about five
+  lines; leave shorter parts visible, so a small PR often has no collapsed
+  blocks.
 - Put each block under the heading that it supports, and give its
   `<summary>` a name that tells what is inside, such as "Retry timing: delay
   before each attempt". Put decisions already made in one block whose
   `<summary>` lists their topics, such as "Decisions already made: retry
   limit, backoff, 4xx handling". In that block, use a table with one row for
   each decision: the question, the decision, and why.
-- **Never collapse** the main flow diagram, the business cases, an open
-  question, an open risk, a required step, or an alert, at any length.
-  Shorten each list item to one line, and collapse only its supporting
-  detail.
+- **Never collapse** the main flow diagram, an open question, an open risk, a
+  required step, or an alert, at any length. Shorten each list item to one
+  line, and collapse only its supporting detail.
 
 Put a blank line after `</summary>` and before `</details>`, or the Markdown
 inside does not render:
@@ -163,11 +164,17 @@ Deliver(payload)
   `-- timeout or 5xx  -> retry with backoff, at most 3 times -> then fail
 ```
 
+<details>
+<summary>Business cases: the result for each delivery outcome</summary>
+
 | Delivery result | Before | After |
 | --- | --- | --- |
 | 2xx | Done | Done |
 | 4xx | Fails at once | Fails at once |
-| Timeout or 5xx | Fails at once | Retries up to 3 times |
+| Timeout | Fails at once | Retries up to 3 times |
+| 5xx | Fails at once | Retries up to 3 times |
+
+</details>
 
 ## What changed and why
 
@@ -199,7 +206,7 @@ Deliver(payload)
 | Input | Expected behavior |
 | --- | --- |
 | Any PR description | Invoke visual-explanations as well, before writing. |
-| Long PR with flows, case tables, and test logs | Open with the summary, the main flow diagram, and the business cases, all visible. Keep open questions, open risks, and required steps visible; put other flows, tables, and logs in named `<details>` blocks. |
+| Long PR with flows, case tables, and test logs | Open with the summary and the main flow diagram, both visible, then the business cases in a collapsed block. Keep open questions, open risks, and required steps visible; put other flows, tables, and logs in named `<details>` blocks. |
 | Many decisions already made and one open question | The open-items section shows the one open question. The decisions go in one block whose title lists their topics, as a table: question, decision, and why. |
 | An open question names the person who must answer it | Keep the question and the @mention out of the body. Put them in a PR comment, and post it only when writes to the PR are allowed. |
 | The repository has a PR template, and one question is open | Put the opening at the start of the template's first section when it asks what the change does or why. Keep every heading in order, and put the open question under the section for reviewer attention. |

@@ -3,9 +3,10 @@ name: pr-descriptions
 description: >-
   Write or restructure a pull request description that people can scan: a
   one- or two-sentence summary of the change's effect, then the main flow
-  diagram and the business cases, then what changed, open questions with
-  their owners, and required steps, with supporting detail and a table of
-  decisions already made in named collapsed blocks.
+  diagram and the business cases, then what changed, open questions, and
+  required steps, with supporting detail and a table of decisions already
+  made in named collapsed blocks. Questions for a named person go in a PR
+  comment, not the body.
   Builds on the repository's PR template when one exists, and always uses
   visual-explanations for diagrams, tables, and alerts. Use when writing,
   updating, or restructuring a pull request description, including the draft
@@ -52,22 +53,29 @@ the order; see [PR template](#pr-template).
    - Topic only: "Handle webhook retry events. This is task 2.1."
    - Effect: "Failed webhook deliveries now retry up to three times with
      backoff. Deliveries that fail with a 4xx status still fail at once."
-2. **Pointer to open items**, when there are any: one line that gives their
-   number and links to the section that lists them.
-3. **Main flow diagram**, when the change adds or alters a flow, such as a
+2. **Main flow diagram**, when the change adds or alters a flow, such as a
    request, event, or code path: one diagram that shows the flow and where
    the change acts.
-4. **Business cases**, when the change gives different results for different
+3. **Business cases**, when the change gives different results for different
    inputs: one table of examples, such as users, plans, or requests, with the
    result for each.
-5. **What changed and why**, as a short list with exact names (files,
+4. **What changed and why**, as a short list with exact names (files,
    sections, functions, settings).
-6. **Open items** that need a person, such as Needs human judgment. Give each
-   one visible line: what to decide, who decides, and what the PR does until
-   then.
-7. **Testing, review, and how the change was produced**, each kept short.
+5. **Open items** that need a person, such as Needs human judgment. Give each
+   one visible line: what to decide and what the PR does until then. A
+   question for a named person goes in a PR comment instead; see
+   [Questions for a person](#questions-for-a-person).
+6. **Testing, review, and how the change was produced**, each kept short.
 
-Items 1 to 4 are the opening. Do not add empty sections of your own.
+Items 1 to 3 are the opening. Do not add empty sections of your own.
+
+## Questions for a person
+
+Do not ask a named person a question in the body, and do not @mention them
+there. Write the question in a PR comment that mentions them, one line for
+each question, with what the PR does until they answer. Post the comment only
+when the task allows writes to the PR, such as when copilot-review-loop opens
+it. Otherwise, give the comment text next to the description.
 
 ## PR template
 
@@ -99,9 +107,9 @@ When a template exists, build the body on it:
 ## Visible and collapsed
 
 - **Keep visible** what a reviewer needs on the first read: the opening, what
-  changed, open questions and open risks with their owners, and steps that a
-  person must do, such as a deploy order. Apart from the main flow diagram and
-  the business cases, keep each point to one or two lines.
+  changed, open questions and open risks, and steps that a person must do,
+  such as a deploy order. Apart from the main flow diagram and the business
+  cases, keep each point to one or two lines.
 - **Collapse supporting detail** into `<details>` blocks: the reasons and
   evidence for a point, decisions already made (including accepted risks),
   other diagrams and case tables, file lists, test output, and review
@@ -148,8 +156,6 @@ sender, and one question is open:
 Failed webhook deliveries now retry up to three times with backoff.
 Deliveries that fail with a 4xx status still fail at once.
 
-[1 open question](#needs-human-judgment): set the retry limit per endpoint?
-
 ```text
 Deliver(payload)
   |-- 2xx             -> done
@@ -193,8 +199,9 @@ Deliver(payload)
 | Input | Expected behavior |
 | --- | --- |
 | Any PR description | Invoke visual-explanations as well, before writing. |
-| Long PR with flows, case tables, and test logs | Open with the summary, the pointer, the main flow diagram, and the business cases, all visible. Keep open questions, open risks, and required steps visible; put other flows, tables, and logs in named `<details>` blocks. |
-| Many decisions already made and one open question | The pointer and the open-items section show the one open question. The decisions go in one block whose title lists their topics, as a table: question, decision, and why. |
+| Long PR with flows, case tables, and test logs | Open with the summary, the main flow diagram, and the business cases, all visible. Keep open questions, open risks, and required steps visible; put other flows, tables, and logs in named `<details>` blocks. |
+| Many decisions already made and one open question | The open-items section shows the one open question. The decisions go in one block whose title lists their topics, as a table: question, decision, and why. |
+| An open question names the person who must answer it | Keep the question and the @mention out of the body. Put them in a PR comment, and post it only when writes to the PR are allowed. |
 | The repository has a PR template, and one question is open | Put the opening at the start of the template's first section when it asks what the change does or why. Keep every heading in order, and put the open question under the section for reviewer attention. |
 | The template's first section is a checklist | Put the opening above the first heading. Keep the checklist, and check only the items that the inputs confirm. |
 | A template comment says to delete a section that does not apply | If the section does not apply, delete it and its comment as told. If it applies, fill it. |

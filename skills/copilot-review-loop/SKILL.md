@@ -121,17 +121,30 @@ cycle is left to act on it.
    not, use `gh pr create -R OWNER/REPO --draft --base <base> --head <branch> --title <title> --body-file <run-dir>/pr-body.md`.
 4. Record the PR in `state.md`, whether it was reused or just opened.
 
-The PR body uses a plain, concise voice and contains:
+The PR body uses a plain, concise voice and the
+[PR description layout](../visual-explanations/SKILL.md#pull-request-descriptions)
+of visual-explanations. It contains, in this order:
 
-- **Needs human judgment** first, when the local loop left valid findings
-  unfixed or escalations, whether passed in by plan-to-pr or found in the
-  shared ledger. List blockers (P0 and P1) first.
-- A summary, then what changed and why.
+- A summary of one or two sentences that says what the change does and its
+  effect. When Needs human judgment has open items, the next line gives their
+  number and links to that section.
+- What changed and why.
+- **Needs human judgment**, when the local loop left valid findings unfixed
+  or escalations, whether passed in by plan-to-pr or found in the shared
+  ledger. List blockers (P0 and P1) first. Give each open item one visible
+  line: what a person must decide, who decides, and what the PR does until
+  then. Collapse the reasons and evidence. Items that are already decided go
+  in one collapsed block whose title lists their topics.
 - Testing: the commands run and their results.
 - A local review summary: reviews, fix cycles, and counts.
 - How it was produced: the pipeline, reviewer models, and the settings:
   reviewer effort, Copilot review effort, and fix cycles.
 - The hidden marker `<!-- copilot-review-loop -->`.
+
+When the repository has a PR template, put each item under the template
+heading that matches it best, and put the rest after the template. Needs human
+judgment goes under the template's heading for reviewer attention, if it has
+one.
 
 ## 3. Review cycle
 
@@ -480,6 +493,7 @@ sender.
 | --- | --- |
 | The request returns 409 right after a push | Wait out the pending review with `--any`, then request Max for the current head. The pending review does not count. |
 | The branch already has an open PR that is not a draft | Stop before pushing and report. Never push to it or change its state. |
+| The repository has a PR template, and the local loop left one open question | Put the summary and a one-line pointer above the template. Keep the template headings in order, and put Needs human judgment under the heading for reviewer attention. |
 | Someone else pushes to the branch while the loop waits | After the wait, see that the PR head moved, post the summary, and hand off. |
 | A review requested at Max lands at BALANCED | Request Max again once, without spending a fix cycle. If it lands at BALANCED again, accept it and record the actual effort. |
 | Max is unavailable for the repository | Request again at the highest listed level, wait for a review at that level, and flag the downgrade in the summary. |

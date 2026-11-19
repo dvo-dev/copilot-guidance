@@ -179,7 +179,7 @@ effort.
 - **Otherwise:** continue. Pass every valid finding left unfixed, at the cap
   or on the light path, every escalation, and every simplify candidate that
   needs approval on to copilot-review-loop. They
-  go first in the PR body under "Needs human judgment", with blockers (P0 and
+  go in the PR body under "Needs human judgment", with blockers (P0 and
   P1) first. When copilot-review-loop reuses an existing draft, whose body it
   does not edit, they go in its summary comment instead.
 

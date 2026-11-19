@@ -4,7 +4,8 @@ description: >-
   Explain code paths and branching outcomes with compact ASCII call graphs,
   decision trees, Markdown tables, and sparing GitHub alert callouts. Use for
   dependency or call-path questions, reviewer critiques, guard-removal what-ifs,
-  branching preconditions, fail-open/fail-closed questions, or output comparisons.
+  branching preconditions, fail-open/fail-closed questions, output comparisons,
+  or pull request descriptions.
 ---
 
 # Visual explanations
@@ -127,6 +128,51 @@ verified consequence, not by tone:
   the same limits, only where the output is plain text, such as commit
   messages, code comments, or logs.
 
+## Pull request descriptions
+
+People scan a pull request (PR) description before they read it. The first
+screen tells them what the change does and what they must decide. All other
+detail stays in the description, one click away.
+
+- **Summary first.** Start with one or two short, plain sentences that say what
+  the change does and its effect: which inputs now give which results, for
+  users or callers. A topic, event name, or ticket number alone is not a
+  summary. Put nothing above it: no heading, alert, table, or template heading.
+  - Topic only: "Handle webhook retry events. This is task 2.1."
+  - Effect: "Failed webhook deliveries now retry up to three times with
+    backoff. Deliveries that fail with a 4xx status still fail at once."
+- **Keep visible** what a reviewer needs on the first read, in one or two
+  lines for each point: the summary, a short list of what changed with exact
+  names (files, sections, functions, settings), open questions and open risks
+  with their owners, and steps that a person must do, such as a deploy order.
+- **Collapse supporting detail** into `<details>` blocks: the reasons and
+  evidence for a point, decisions already made (including accepted risks),
+  diagrams, case tables, file lists, test output, and review history. Collapse
+  a part only when it is longer than about five lines; leave shorter parts
+  visible, so a small PR often has no collapsed blocks. Put each block under
+  the heading that it supports, and give its `<summary>` a name that tells
+  what is inside, such as "Retry flow: where a delivery stops". Put decisions
+  already made in one block whose `<summary>` lists their topics, such as
+  "Decisions already made: retry limit, backoff, 4xx handling". Never collapse
+  an open question, open risk, required step, or alert, even in a long list:
+  shorten each item to one line, and collapse only its supporting detail.
+- **Keep the repository's PR template.** Keep its headings in their order, and
+  put the summary above the first heading. If that heading is a summary
+  heading, such as "Summary", put the summary under it instead. Do not add
+  empty sections.
+
+Put a blank line after `</summary>` and before `</details>`, or the Markdown
+inside does not render:
+
+```markdown
+<details>
+<summary>Retry flow: where a delivery stops</summary>
+
+(diagram or table)
+
+</details>
+```
+
 ## Boundaries
 
 Explanation and review requests are read-only unless separately authorized.
@@ -180,4 +226,6 @@ shape. Cite the actual implementation; the example establishes no repository fac
 | Missing or contradictory evidence | State what is known and identify the precise gap. |
 | Chat answer where a proposed change would fail open | Use a `[!CAUTION]` alert with the verified condition and citation; keep the graph and table outside it. |
 | Commit message or code comment with one decisive caveat | Use a bold lead-in instead of alert syntax; keep other caveats in prose. |
+| Long PR description with flows, case tables, and test logs | Start with a one- or two-sentence summary of the effect. Keep open questions, open risks, and required steps visible. Put decisions already made in one block that lists their topics, and each flow, table, and log in a named `<details>` block. |
+| Small documentation-only PR | Write a short summary and a few lines, with no collapsed blocks or empty sections. |
 | Simple property question | Give a short cited answer without a visual or alert. |

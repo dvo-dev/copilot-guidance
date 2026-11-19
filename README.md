@@ -1,7 +1,7 @@
 # copilot-guidance
 
-Reusable agent skills for code explanations, reviews, implementation planning,
-and an agentic development pipeline.
+Reusable agent skills for code explanations, reviews, pull request descriptions,
+implementation planning, and an agentic development pipeline.
 
 ## Install
 

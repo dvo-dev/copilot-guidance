@@ -30,6 +30,10 @@ fetch production data.
 A simple location, property assignment, or confirmation normally needs only a
 sentence and citation. Do not turn it into a graph or table.
 
+For a pull request description, also follow
+[pr-descriptions](../pr-descriptions/SKILL.md), which sets the layout and what
+to collapse. This skill covers only the visuals in it.
+
 ## Procedure
 
 1. **Frame the decision.**

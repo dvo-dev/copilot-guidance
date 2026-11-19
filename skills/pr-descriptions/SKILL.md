@@ -4,9 +4,10 @@ description: >-
   Write or restructure a pull request description that people can scan: a
   one- or two-sentence summary of the change's effect, then the main flow
   diagram, with the business cases collapsed right after it, then what
-  changed, open questions, and required steps, with supporting detail and a
-  table of decisions already made in named collapsed blocks. Questions for a
-  named person go in a PR comment, not the body.
+  changed, a table of open decisions with why each matters, and required
+  steps. Supporting detail and a table of decisions already made, with why
+  each was accepted or deferred, go in named collapsed blocks. Questions for
+  a named person go in a PR comment, not the body.
   Builds on the repository's PR template when one exists, and always uses
   visual-explanations for diagrams, tables, and alerts. Use when writing,
   updating, or restructuring a pull request description, including the draft
@@ -62,9 +63,14 @@ the order; see [PR template](#pr-template).
    unless it is about five lines or shorter.
 4. **What changed and why**, as a short list with exact names (files,
    sections, functions, settings).
-5. **Open items** that need a person, such as Needs human judgment. Give each
-   one visible line: what to decide and what the PR does until then. A
-   question for a named person goes in a PR comment instead; see
+5. **Open decisions** that need a person, such as Needs human judgment, as a
+   visible table with one row for each: the decision needed, why it matters
+   (what is at stake, and why a person must decide it), and what the PR does
+   until then. Collapse the evidence. An item that already has a recorded
+   decision, such as an accepted risk or a deferred fix, goes in the table of
+   decisions already made instead; see
+   [Visible and collapsed](#visible-and-collapsed). When a named person must
+   answer, leave their name out of the row and ask them in a PR comment; see
    [Questions for a person](#questions-for-a-person).
 6. **Testing, review, and how the change was produced**, each kept short.
 
@@ -94,9 +100,9 @@ When a template exists, build the body on it:
 - Put the opening at the start of the first section when that section asks
   what the change does or why, such as "Summary", "Description", or "What
   are you trying to accomplish?". Otherwise, put it above the first heading.
-- Put each other item under the section that matches it best, and open items
-  under the section for reviewer attention, if there is one. Put items that
-  match no section after the template.
+- Put each other item under the section that matches it best, and open
+  decisions under the section for reviewer attention, if there is one. Put
+  items that match no section after the template.
 - Treat the template's HTML comments as instructions to the author. Follow
   them, for example by deleting a section that the template says to delete
   when it does not apply. Keep the other comments.
@@ -108,24 +114,31 @@ When a template exists, build the body on it:
 ## Visible and collapsed
 
 - **Keep visible** what a reviewer needs on the first read: the summary, the
-  main flow diagram, what changed, open questions and open risks, and steps
-  that a person must do, such as a deploy order. Apart from the main flow
-  diagram, keep each point to one or two lines.
+  main flow diagram, what changed, the table of open decisions and open
+  risks, and steps that a person must do, such as a deploy order. Apart from
+  the main flow diagram, keep each point and table cell to one or two short
+  sentences.
 - **Collapse supporting detail** into `<details>` blocks: the business cases,
   the reasons and evidence for a point, decisions already made (including
-  accepted risks), other diagrams and case tables, file lists, test output,
-  and review history. Collapse a part only when it is longer than about five
-  lines; leave shorter parts visible, so a small PR often has no collapsed
-  blocks.
+  accepted risks and deferred fixes), other diagrams and case tables, file
+  lists, test output, and review history. Collapse a part only when it is
+  longer than about five lines; leave shorter parts visible, so a small PR
+  often has no collapsed blocks.
 - Put each block under the heading that it supports, and give its
   `<summary>` a name that tells what is inside, such as "Retry timing: delay
-  before each attempt". Put decisions already made in one block whose
-  `<summary>` lists their topics, such as "Decisions already made: retry
-  limit, backoff, 4xx handling". In that block, use a table with one row for
-  each decision: the question, the decision, and why.
-- **Never collapse** the main flow diagram, an open question, an open risk, a
-  required step, or an alert, at any length. Shorten each list item to one
-  line, and collapse only its supporting detail.
+  before each attempt".
+- **Decisions already made** go in one block, right after the open
+  decisions, that holds only their table. Its `<summary>` lists their topics,
+  not only their IDs, such as "Decisions already made: retry limit, backoff,
+  4xx handling". Give each decision one row: the question, its status (such
+  as accepted, deferred, or confirmed), the decision, and why it was accepted
+  or deferred. That why is the reason the outcome is acceptable now, such as
+  a constraint, evidence, cost, or who confirmed it; it does not restate the
+  outcome or its effect. For a deferral, also say when to revisit it.
+- **Never collapse** the main flow diagram, an open decision, an open risk, a
+  required step, or an alert, at any length. Shorten each list item or table
+  cell to one or two short sentences, and collapse only the supporting
+  detail.
 
 Put a blank line after `</summary>` and before `</details>`, or the Markdown
 inside does not render:
@@ -183,16 +196,18 @@ Deliver(payload)
 
 ## Needs human judgment
 
-- **Set the retry limit per endpoint?** The API owners decide. Until then,
-  one global limit applies.
+| Decision needed | Why it matters | Until decided |
+| --- | --- | --- |
+| Set the retry limit per endpoint? | Slow receivers may need fewer retries, and the API owners own that trade-off. | One global limit of 3 applies. |
 
 <details>
-<summary>Decisions already made: backoff, 4xx handling</summary>
+<summary>Decisions already made: backoff, 4xx handling, per-endpoint metrics</summary>
 
-| Question | Decision | Why |
-| --- | --- | --- |
-| Backoff shape? | Jittered exponential | Spreads retries after an outage |
-| Retry a 4xx? | No | The receiver rejected the request |
+| Question | Status | Decision | Why accepted or deferred |
+| --- | --- | --- | --- |
+| Backoff shape? | Accepted | Jittered exponential | It spreads retries after an outage, and the HTTP client already supports it. |
+| Retry a 4xx? | Accepted | No | The receiver rejected the request, so a retry gives the same result. |
+| Per-endpoint retry metrics? | Deferred | Not in this PR | They help only once per-endpoint limits exist. Revisit with that decision. |
 
 </details>
 
@@ -207,8 +222,9 @@ Deliver(payload)
 | --- | --- |
 | Any PR description | Invoke visual-explanations as well, before writing. |
 | Long PR with flows, case tables, and test logs | Open with the summary and the main flow diagram, both visible, then the business cases in a collapsed block. Keep open questions, open risks, and required steps visible; put other flows, tables, and logs in named `<details>` blocks. |
-| Many decisions already made and one open question | The open-items section shows the one open question. The decisions go in one block whose title lists their topics, as a table: question, decision, and why. |
-| An open question names the person who must answer it | Keep the question and the @mention out of the body. Put them in a PR comment, and post it only when writes to the PR are allowed. |
+| Many decisions already made and one open question | The open question is one row in the visible open-decisions table: the decision needed, why it matters, and what the PR does until then. The decisions go in one collapsed block that lists their topics, as a table: question, status, decision, and why it was accepted or deferred. |
+| During the run, the user accepted a risk or deferred a fix | Put it only in the table of decisions already made, with why it was accepted or deferred and when to revisit it. |
+| An open question names the person who must answer it | Keep its row in the open-decisions table, without the name or an @mention, and say it was asked in a PR comment. Post that comment only when writes to the PR are allowed. |
 | The repository has a PR template, and one question is open | Put the opening at the start of the template's first section when it asks what the change does or why. Keep every heading in order, and put the open question under the section for reviewer attention. |
 | The template's first section is a checklist | Put the opening above the first heading. Keep the checklist, and check only the items that the inputs confirm. |
 | A template comment says to delete a section that does not apply | If the section does not apply, delete it and its comment as told. If it applies, fill it. |

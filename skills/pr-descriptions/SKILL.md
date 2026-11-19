@@ -5,10 +5,10 @@ description: >-
   one- or two-sentence summary of the change's effect first, then what
   changed, open questions with their owners, and required steps, with
   supporting detail and decisions already made in named collapsed blocks.
-  Keeps the repository's PR template and always uses visual-explanations for
-  diagrams, tables, and alerts. Use when writing, updating, or restructuring a
-  pull request description, including the draft PR body that
-  copilot-review-loop writes.
+  Builds on the repository's PR template when one exists, and always uses
+  visual-explanations for diagrams, tables, and alerts. Use when writing,
+  updating, or restructuring a pull request description, including the draft
+  PR body that copilot-review-loop writes.
 ---
 
 # Pull request descriptions
@@ -32,18 +32,22 @@ when the task asks for it.
 - **Facts to report:** tests and their results, review results, open
   questions with their owners, and steps that a person must do. Use only
   facts from these sources.
-- **The repository's PR template**, if there is one, such as
-  `.github/pull_request_template.md`.
+- **The repository's PR template**, if there is one; see
+  [PR template](#pr-template).
 - **Sections that another skill requires**, such as copilot-review-loop's
   Needs human judgment, review summary, and hidden marker. That skill decides
   what they contain; this skill decides where they go and what stays visible.
 
 ## Order
 
+Without a PR template, use this order. With one, the template's sections set
+the order; see [PR template](#pr-template).
+
 1. **Summary.** One or two short, plain sentences that say what the change
    does and its effect: which inputs now give which results, for users or
    callers. A topic, event name, or ticket number alone is not a summary. Put
-   nothing above it: no heading, alert, table, or template heading.
+   nothing above it: no heading, alert, or table. The only exception is the
+   first heading of a PR template.
    - Topic only: "Handle webhook retry events. This is task 2.1."
    - Effect: "Failed webhook deliveries now retry up to three times with
      backoff. Deliveries that fail with a 4xx status still fail at once."
@@ -56,12 +60,35 @@ when the task asks for it.
    then.
 5. **Testing, review, and how the change was produced**, each kept short.
 
-With a repository PR template, keep its headings in their order. Put the
-summary and the pointer above the first heading; if that heading is a summary
-heading, such as "Summary", put the summary under it instead. Put each item
-under the heading that matches it best, and put open items under the heading
-for reviewer attention, if there is one. Put the rest after the template. Do
-not add empty sections.
+Do not add empty sections of your own.
+
+## PR template
+
+Look for the repository's PR template before you write. GitHub reads
+`pull_request_template.md` from the repository root, `.github/`, or `docs/`
+(in any letter case, as `.md` or `.txt`), and several templates from a
+`PULL_REQUEST_TEMPLATE/` folder in one of those places. If the repository has
+none, the owner's `.github` repository can supply a default. With several
+templates, use the one that fits the change, and say which one you used.
+
+When a template exists, build the body on it:
+
+- Keep its headings, with the same text and level, in their order. Do not
+  rename, merge, or reorder them.
+- Put the summary and the pointer as the first lines of the first section
+  when that section asks what the change does or why, such as "Summary",
+  "Description", or "What are you trying to accomplish?". Otherwise, put
+  them above the first heading.
+- Put each other item under the section that matches it best, and open items
+  under the section for reviewer attention, if there is one. Put items that
+  match no section after the template.
+- Treat the template's HTML comments as instructions to the author. Follow
+  them, for example by deleting a section that the template says to delete
+  when it does not apply. Keep the other comments.
+- Keep checklists. Check an item only when the inputs show that it is true.
+- When a section does not apply and the template does not say to delete it,
+  keep the heading and write "N/A" with a short reason.
+- Apply the visible and collapsed rules inside each section.
 
 ## Visible and collapsed
 
@@ -151,7 +178,10 @@ Deliveries that fail with a 4xx status still fail at once.
 | Any PR description | Invoke visual-explanations as well, before writing. |
 | Long PR with flows, case tables, and test logs | Start with a summary of the effect. Keep open questions, open risks, and required steps visible; put each flow, table, and log in a named `<details>` block. |
 | Many decisions already made and one open question | The pointer and the open-items section show the one open question. The decisions go in one block whose title lists their topics. |
-| The repository has a PR template, and one question is open | Put the summary and the pointer above the template. Keep the headings in order, and put the open question under the heading for reviewer attention. |
-| The template's first heading is "Summary" | Put the summary under that heading, not above it. |
+| The repository has a PR template, and one question is open | Put the summary and the pointer as the first lines of the template's first section when it asks what the change does or why. Keep every heading in order, and put the open question under the section for reviewer attention. |
+| The template's first section is a checklist | Put the summary and the pointer above the first heading. Keep the checklist, and check only the items that the inputs confirm. |
+| A template comment says to delete a section that does not apply | If the section does not apply, delete it and its comment as told. If it applies, fill it. |
+| A template section does not apply, and the template gives no instruction | Keep the heading and write "N/A" with a short reason. |
+| The repository has several templates in `PULL_REQUEST_TEMPLATE/` | Use the one that fits the change, and say which one you used. |
 | Small documentation-only PR | Write a short summary and a few lines, with no collapsed blocks or empty sections. |
 | The inputs give no owner for an open item | Say that no owner is recorded; do not invent one. |

@@ -237,7 +237,7 @@ webhook sender", which has 4 todos.
    judgment: C2.1, whether retries should be configurable per endpoint.
    Settings: defaults (reviewers xhigh, Copilot max, 3 local and 3 PR fix
    cycles). Usage: 4 adversarial-review rounds (claude-opus-5.5 xhigh,
-   gpt-6-astra xhigh, none degraded), 2 Copilot reviews at MAX, 2 fix
+   gpt-6.2-astra xhigh, none degraded), 2 Copilot reviews at MAX, 2 fix
    cycles."
 
 ## Walkthrough cases

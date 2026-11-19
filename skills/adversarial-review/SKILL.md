@@ -85,7 +85,7 @@ Use two slots from different providers.
 | Slot | Provider | Current default model (verified 2026-11) |
 | --- | --- | --- |
 | A | Anthropic | Claude Opus 5.5 (`claude-opus-5.5`) |
-| B | OpenAI | GPT-6 Astra (`gpt-6-astra`) |
+| B | OpenAI | GPT-6.2 Astra (`gpt-6.2-astra`) |
 
 - **The user requires the model and effort explicitly.** Each slot uses its
   provider's most capable model at the reviewer effort from
@@ -315,7 +315,7 @@ Ledger rows:
 Only slot B raised L1.2, and nobody rated it above P2, so it needs no
 validator.
 
-Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6-astra xhigh):
+Summary line: "Round 1, dual-model (claude-opus-5.5 xhigh, gpt-6.2-astra xhigh):
 2 fix (P1), 1 reject. A: incorrect. B: incorrect."
 
 ## Walkthrough cases

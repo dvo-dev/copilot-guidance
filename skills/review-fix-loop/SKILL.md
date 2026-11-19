@@ -309,7 +309,7 @@ endpoint, and `make test` is green.
   clean.
 
 Report: "Clean after 2 reviews and 1 of 3 fix cycles (claude-opus-5.5 xhigh,
-gpt-6-astra xhigh). Simplify removed a single-use class and an unused option
+gpt-6.2-astra xhigh). Simplify removed a single-use class and an unused option
 (180 to 142 added lines). Fixed L1.1 and L1.2; rejected L1.3. `make test`
 passes."
 

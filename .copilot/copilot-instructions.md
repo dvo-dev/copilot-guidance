@@ -29,4 +29,4 @@ Decision needed: <each "reuse, changed requirements" option and its changes, or 
 
 ## Pull request descriptions
 
-- When you write a pull request description, use `/visual-explanations` to make it clear and easy for people to read.
+- When you write a pull request description, use `/pr-descriptions` to make it clear and easy for people to read.

@@ -11,20 +11,29 @@ before approving a plan or a code decision.
 **Result:** one scenario carried from entry point to final state, with a recap.
 
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
 flowchart TD
-    A["Identify entry point,<br/>revision, actor, and scenario"] --> B["Trace every function<br/>that this scenario reaches"]
-    B --> C["Split the path<br/>into major logical segments"]
-    C --> D["Show overview map,<br/>scenario, and starting state"]
-    D --> E["Show one segment:<br/>chain, excerpt, state, and sources"]
+    A("Identify entry point,<br/>revision, actor, and scenario") --> B("Trace every function<br/>that this scenario reaches")
+    B --> C("Split the path<br/>into major logical segments")
+    C --> D("Show overview map,<br/>scenario, and starting state")
+    D --> E("Show one segment:<br/>chain, excerpt, state, and sources")
     E --> V{"Focused branch or<br/>outcome comparison?"}
-    V -->|Yes| X["Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>for this decision"]
+    V -->|Yes| X{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>for this decision"}}
     X --> F{"User chooses next?"}
     V -->|No| F
     F -->|Next segment| E
-    F -->|Go deeper or what-if| G["Stay on the same scenario<br/>and map"]
+    F -->|Go deeper or what-if| G("Stay on the same scenario<br/>and map")
     G --> E
-    F -->|Stop or last segment| H["Show checkpoint table,<br/>full chain, and invariants"]
+    F -->|Stop or last segment| H(["Show checkpoint table,<br/>full chain, and invariants"])
+
+    classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
+    classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
+    classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
+    classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
+    class A,B,C,D,E,G stage;
+    class X delegated;
+    class H outcome;
+    class V,F decision;
 
 ```
 
@@ -37,8 +46,8 @@ walkthrough. This page does not redraw the delegated visual flow.
 <details>
 <summary>Open the synthetic billing-ledger walkthrough</summary>
 
-> [!NOTE]
-> The scenario, functions, source excerpts, and state are fictional.
+**Synthetic example:** The scenario, functions, source excerpts, and state are
+fictional.
 
 **Scenario:** In a billing ledger, account `acct-9` starts with a $100 credit.
 The worker receives usage event `usage-731` for a $60 charge. The same event

@@ -21,34 +21,34 @@ All Mermaid diagrams in this documentation use a fixed Tokyo Night palette.
 Hosts that ignore Mermaid init directives use their own diagram theme.
 
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
 flowchart TD
-    NEED["Person: business intent<br/>or desired behavior change"]
+    NEED(["Person: business intent<br/>or desired behavior change"])
 
     subgraph SHAPE["Meat proxy: shape technical intent"]
-        VISUAL["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>make paths and tradeoffs readable"]
-        REUSE["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/surgical-refactoring.md'>surgical-refactoring</a><br/>reuse existing scaffolding and contracts"]
-        TECH["Human-readable technical intent<br/>assumptions, reuse, and open choices"]
+        VISUAL{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>make paths and tradeoffs readable"}}
+        REUSE{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/surgical-refactoring.md'>surgical-refactoring</a><br/>reuse existing scaffolding and contracts"}}
+        TECH("Human-readable technical intent<br/>assumptions, reuse, and open choices")
     end
 
     NEED --> VISUAL --> TECH
     NEED --> REUSE --> TECH
     TECH --> TEACH{"Need a teaching pass?"}
-    TEACH -->|Yes| WALK["Optional: <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/plan-walkthrough-quiz.md'>plan-walkthrough-quiz</a>"]
-    TEACH -->|No| APPROVE["Person approves plan"]
+    TEACH -->|Yes| WALK{{"Optional: <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/plan-walkthrough-quiz.md'>plan-walkthrough-quiz</a>"}}
+    TEACH -->|No| APPROVE(["Person approves plan"])
     WALK --> APPROVE
 
     subgraph FACTORY["Current automated factory"]
-        PLAN["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"]
-        INTAKE["1. Intake<br/>read plan, lock branch,<br/>resolve scope and settings"]
-        REVIEW["2. Plan review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/adversarial-review.md'>adversarial-review</a>"]
-        BUILD["3. Implement<br/>todos, tests, and commits"]
-        GATEA["4. Gate A<br/>deterministic checks"]
-        LOCAL["5. Local review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/review-fix-loop.md'>review-fix-loop</a>"]
-        GATEB["6. Gate B<br/>continue, report, or stop"]
-        PR["7. Draft PR review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/copilot-review-loop.md'>copilot-review-loop</a>"]
-        DESC["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a><br/>expose decisions, risks,<br/>tradeoffs, and required steps"]
-        HANDOFF["8. Handoff<br/>draft PR and decision packet"]
+        PLAN{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"}}
+        INTAKE("1. Intake<br/>read plan, lock branch,<br/>resolve scope and settings")
+        REVIEW{{"2. Plan review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a>"}}
+        BUILD("3. Implement<br/>todos, tests, and commits")
+        GATEA("4. Gate A<br/>deterministic checks")
+        LOCAL{{"5. Local review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/review-fix-loop.md'>review-fix-loop</a>"}}
+        GATEB("6. Gate B<br/>continue, report, or stop")
+        PR{{"7. Draft PR review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/copilot-review-loop.md'>copilot-review-loop</a>"}}
+        DESC{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a><br/>expose decisions, risks,<br/>tradeoffs, and required steps"}}
+        HANDOFF("8. Handoff<br/>draft PR and decision packet")
 
         PLAN --> INTAKE --> REVIEW --> BUILD
         BUILD --> GATEA --> LOCAL --> GATEB --> PR --> DESC --> HANDOFF
@@ -57,9 +57,9 @@ flowchart TD
     APPROVE --> PLAN
 
     subgraph REVIEWPR["Meat proxy: understand and judge the draft PR"]
-        FLOW["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"]
-        ANNOTATE["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/pr-annotations.md'>pr-annotations</a><br/>help reviewers follow the diff<br/>with inline commentary"]
-        CHOICES["Decision choices exposed<br/>accept, adjust, defer, or enforce"]
+        FLOW{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"}}
+        ANNOTATE{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/pr-annotations.md'>pr-annotations</a><br/>help reviewers follow the diff<br/>with inline commentary"}}
+        CHOICES("Decision choices exposed<br/>accept, adjust, defer, or enforce")
         HUMAN{"Human reviewer:<br/>push back, defer,<br/>enforce, or accept?"}
     end
 
@@ -67,10 +67,25 @@ flowchart TD
     HANDOFF --> ANNOTATE --> CHOICES
     DESC -.-> CHOICES
     CHOICES --> HUMAN
-    HUMAN -->|adjustment needed| REWORK["Manual revision<br/>to intent, plan, or code"]
+    HUMAN -->|adjustment needed| REWORK("Manual revision<br/>to intent, plan, or code")
     REWORK -.-> PLAN
-    HUMAN -->|ready| MERGED["Person merges PR"]
-    MERGED --> REFINE["Post-merge: <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"]
+    HUMAN -->|ready| MERGED(["Person merges PR"])
+    MERGED --> REFINE{{"Post-merge: <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"}}
+
+    classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
+    classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
+    classDef human fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
+    classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
+    classDef optional fill:#16161e,stroke:#565f89,stroke-width:1px,color:#a9b1d6,stroke-dasharray:4 3;
+    class TECH,INTAKE,BUILD,GATEA,GATEB,HANDOFF,CHOICES stage;
+    class VISUAL,REUSE,WALK,PLAN,REVIEW,LOCAL,PR,DESC,FLOW,ANNOTATE,REFINE delegated;
+    class NEED,APPROVE,MERGED human;
+    class TEACH,HUMAN decision;
+    class REWORK optional;
+
+    style SHAPE fill:#14151f,stroke:#565f89,stroke-width:1px,color:#bb9af7;
+    style FACTORY fill:#16161e,stroke:#7aa2f7,stroke-width:1.5px,color:#c0caf5;
+    style REVIEWPR fill:#14151f,stroke:#bb9af7,stroke-width:1px,color:#bb9af7;
 ```
 
 Plan review and local hardening are delegation boundaries. Their own pages show
@@ -98,8 +113,8 @@ change still stops or is reported, because it needs new approval.
 <details>
 <summary>Open the synthetic plan-to-PR handoff</summary>
 
-> [!NOTE]
-> The plan, commits, reviews, PR, and decisions below are fictional.
+**Synthetic example:** The plan, commits, reviews, PR, and decisions below are
+fictional.
 
 **Case:** Add idempotent usage posting to a billing ledger. Event `usage-731`
 debits $60 from a $100 balance once. A repeated or concurrent request returns

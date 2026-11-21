@@ -12,26 +12,35 @@ progress visible, then stops when human or concurrent work needs ownership.
 **Result:** an iterated draft PR and a summary for human reviewers.
 
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
 flowchart TD
-    A["Check clean branch,<br/>green gates, scope, and gh access"] --> B{"Existing open<br/>draft PR?"}
-    B -->|No| C["Push, then invoke<br/><a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a>"]
-    B -->|Yes| D["Reuse draft PR<br/>without editing its body"]
-    C --> E["Request Copilot review"]
+    A("Check clean branch,<br/>green gates, scope, and gh access") --> B{"Existing open<br/>draft PR?"}
+    B -->|No| C{{"Push, then invoke<br/><a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a>"}}
+    B -->|Yes| D("Reuse draft PR<br/>without editing its body")
+    C --> E("Request Copilot review")
     D --> E
-    E --> F["Wait for review and CI"]
-    F --> G["Collect threads and overview findings"]
-    G --> H["Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"]
-    H --> I["Classify CI failures<br/>and rerun failed Actions once"]
+    E --> F("Wait for review and CI")
+    F --> G("Collect threads and overview findings")
+    G --> H{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"}}
+    H --> I("Classify CI failures<br/>and rerun failed Actions once")
     I --> J{"Actionable item<br/>and cycle left?"}
-    J -->|Yes| K["Test-first fix, gate,<br/>commit, and push"]
-    K --> L["Reply and resolve<br/>adjudicated threads"]
+    J -->|Yes| K("Test-first fix, gate,<br/>commit, and push")
+    K --> L("Reply and resolve<br/>adjudicated threads")
     J -->|No| L
     L --> M{"New push and<br/>cycle left?"}
-    M -->|No push or stop| N["Post or update<br/>human handoff summary"]
+    M -->|No push or stop| N(["Post or update<br/>human handoff summary"])
     M -->|Push, cycles remain| E
-    M -->|Push, cap reached| O["Request final review<br/>without waiting"]
+    M -->|Push, cap reached| O("Request final review<br/>without waiting")
     O --> N
+
+    classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
+    classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
+    classDef human fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
+    classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
+    class A,D,E,F,G,I,K,L,O stage;
+    class C,H delegated;
+    class N human;
+    class B,J,M decision;
 
 ```
 
@@ -53,8 +62,7 @@ The fix commit follows the explicit-path, test-first, and ledger rules from the
 <details>
 <summary>Open the synthetic Copilot review handoff</summary>
 
-> [!NOTE]
-> The PR, review, CI result, and URLs below are fictional.
+**Synthetic example:** The PR, review, CI result, and URLs below are fictional.
 
 **Draft PR handoff comment**
 

@@ -12,19 +12,28 @@ making the final decision.
 supporting detail.
 
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
 flowchart TD
-    A["Read diff, intent,<br/>facts, and repository template"] --> B["Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>and consume the result"]
-    B --> C["Write effect-focused summary"]
-    C --> D["Add one main flow diagram"]
-    D --> E["Add business cases<br/>when inputs differ"]
-    E --> F["List what changed and why"]
-    F --> G["Show open decisions<br/>and required steps"]
-    G --> H["Collapse supporting evidence<br/>and decisions already made"]
+    A("Read diff, intent,<br/>facts, and repository template") --> B{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>and consume the result"}}
+    B --> C("Write effect-focused summary")
+    C --> D("Add one main flow diagram")
+    D --> E("Add business cases<br/>when inputs differ")
+    E --> F("List what changed and why")
+    F --> G("Show open decisions<br/>and required steps")
+    G --> H("Collapse supporting evidence<br/>and decisions already made")
     H --> I{"Named person<br/>must answer?"}
-    I -->|Yes| J["Draft one PR comment<br/>for that question"]
-    I -->|No| K["Return description"]
+    I -->|Yes| J("Draft one PR comment<br/>for that question")
+    I -->|No| K(["Return description"])
     J --> K
+
+    classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
+    classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
+    classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
+    classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
+    class A,C,D,E,F,G,H,J stage;
+    class B delegated;
+    class K outcome;
+    class I decision;
 
 ```
 
@@ -42,21 +51,28 @@ does not redraw that flow here.
 <details>
 <summary>Open the synthetic pull request body</summary>
 
-> [!NOTE]
-> The PR body below is fictional and demonstrates structure only.
+**Synthetic example:** The PR body below is fictional and demonstrates structure
+only.
 
 The billing ledger now posts one $60 debit for each usage event. Repeated or
 concurrent delivery of the same event ID returns the original entry without a
 second balance change.
 
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
 flowchart LR
-    EVENT["Usage event: usage-731"] --> FOUND{"Ledger entry exists?"}
-    FOUND -->|Yes| RETURN["Return original $60 entry"]
-    FOUND -->|No| VALIDATE["Calculate and validate charge"]
-    VALIDATE --> POST["Append debit in ledger transaction"]
-    POST --> BALANCE["Balance: $100 -> $40"]
+    EVENT(["Usage event: usage-731"]) --> FOUND{"Ledger entry exists?"}
+    FOUND -->|Yes| RETURN(["Return original $60 entry"])
+    FOUND -->|No| VALIDATE("Calculate and validate charge")
+    VALIDATE --> POST("Append debit in ledger transaction")
+    POST --> BALANCE(["Balance: $100 -> $40"])
+
+    classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
+    classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
+    classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
+    class VALIDATE,POST stage;
+    class EVENT,RETURN,BALANCE outcome;
+    class FOUND decision;
 ```
 
 ### What changed and why

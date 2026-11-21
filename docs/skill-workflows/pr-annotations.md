@@ -12,21 +12,32 @@ a large or generated PR.
 **Result:** one comment-only review with an overview and a few inline notes.
 
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
 flowchart TD
-    A["Read PR state, revisions,<br/>reviews, and existing annotations"] --> B{"Eligible and changed<br/>at this head?"}
-    B -->|No| C["Stop<br/>or link the existing annotation"]
+    A("Read PR state, revisions,<br/>reviews, and existing annotations") --> B{"Eligible and changed<br/>at this head?"}
+    B -->|No| C(["Stop<br/>or link the existing annotation"])
     B -->|Yes| D{"Prior annotation<br/>for an update?"}
-    D -->|Yes| E["Incremental mode<br/>compare PR-relative changes"]
-    D -->|No| F["Full mode<br/>compare merge base to head"]
-    E --> G["Select at most six<br/>behavioral production segments"]
+    D -->|Yes| E("Incremental mode<br/>compare PR-relative changes")
+    D -->|No| F("Full mode<br/>compare merge base to head")
+    E --> G("Select at most six<br/>behavioral production segments")
     F --> G
-    G --> H["Apply <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>trace and consume the result"]
-    H --> I["Classify concern<br/>and state stated or inferred why"]
-    I --> J["Draft overview and inline notes"]
+    G --> H{{"Apply <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>trace and consume the result"}}
+    H --> I("Classify concern<br/>and state stated or inferred why")
+    I --> J("Draft overview and inline notes")
     J --> K{"Head still unchanged?"}
-    K -->|No| L["Stop<br/>Do not post stale anchors"]
-    K -->|Yes| M["Submit one<br/>comment-only review"]
+    K -->|No| L(["Stop<br/>Do not post stale anchors"])
+    K -->|Yes| M(["Submit one<br/>comment-only review"])
+
+    classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
+    classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
+    classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
+    classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
+    classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
+    class A,E,F,G,I,J stage;
+    class H delegated;
+    class M outcome;
+    class C,L terminal;
+    class B,D,K decision;
 
 ```
 
@@ -44,8 +55,8 @@ submission flow; it does not repeat the delegated trace procedure.
 <details>
 <summary>Open the synthetic pull request annotation</summary>
 
-> [!NOTE]
-> The code locations, intent quote, and behavior below are fictional.
+**Synthetic example:** The code locations, intent quote, and behavior below are
+fictional.
 
 **Case:** A billing ledger posts usage event `usage-731` and changes an account
 balance from $100 to $40. A repeated or concurrent request must return the

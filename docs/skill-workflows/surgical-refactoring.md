@@ -20,7 +20,9 @@ flowchart TD
     C --> D("Compare concrete<br/>small designs")
     D --> E{"Does a design preserve<br/>every contract?"}
     E -->|No| F(["Keep best preserving design<br/>or request approval"])
-    E -->|Yes| G("Apply smallest design<br/>when edits are authorized")
+    E -->|Yes| AUTH{"Edits<br/>authorized?"}
+    AUTH -->|No: analysis only| RETURN(["Return candidates,<br/>contracts, and validation limits"])
+    AUTH -->|Yes| G("Apply smallest design")
     G --> H("Validate real entry points<br/>and forbidden work")
     H --> I("Remove obsolete code<br/>and keep surviving coverage")
     I --> J(["Report before and after,<br/>checks, and limits"])
@@ -30,9 +32,9 @@ flowchart TD
     classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
     class A,B,C,D,G,H,I stage;
-    class J outcome;
+    class J,RETURN outcome;
     class F terminal;
-    class E decision;
+    class E,AUTH decision;
 ```
 
 The workflow prefers evidence over line counts or wrapper counts. It keeps
@@ -52,20 +54,14 @@ duplicate amount calculation and ledger-entry construction.
 
 **Chosen alternative**
 
-```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
-flowchart LR
-    PREVIEW(["Invoice preview"]) --> CORE("Existing charge calculator<br/>+ private entry builder")
-    POST(["Billing worker"]) --> CORE
-    CORE --> PREVIEWR(["Preview returns amount<br/>and performs no write"])
-    CORE --> POSTR(["Worker uses existing<br/>appendLedgerEntry transaction"])
+```text
+Before (each path duplicates calculation and entry construction):
+preview -> inline charge math -> inline entry build -> return amount
+worker  -> inline charge math -> inline entry build -> appendLedgerEntry()
 
-    classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
-    classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
-    classDef human fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
-    class CORE stage;
-    class PREVIEW,POST human;
-    class PREVIEWR,POSTR outcome;
+After (existing calculator, one private builder, separate side effects):
+preview -> charge calculator -> private entry builder -> return amount, no write
+worker  -> charge calculator -> private entry builder -> appendLedgerEntry()
 ```
 
 | Contract | Before | After |

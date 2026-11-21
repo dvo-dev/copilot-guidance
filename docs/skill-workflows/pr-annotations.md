@@ -30,9 +30,11 @@ flowchart TD
     G --> H{{"Apply <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>trace and consume the result"}}
     H --> I("Classify concern<br/>and state stated or inferred why")
     I --> J("Draft overview and inline notes")
-    J --> K{"Head still unchanged?"}
-    K -->|No| L(["Stop<br/>Do not post stale anchors"])
-    K -->|Yes| M(["Submit one<br/>comment-only review"])
+    J --> K{"Posting<br/>authorized?"}
+    K -->|No: preview only| L(["Return draft<br/>without posting"])
+    K -->|Yes| M{"Head still unchanged?"}
+    M -->|No| N(["Stop<br/>do not post stale anchors"])
+    M -->|Yes| O(["Submit one<br/>comment-only review"])
 
     classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
     classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
@@ -41,9 +43,9 @@ flowchart TD
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
     class A,E,F,G,I,J stage;
     class H delegated;
-    class M outcome;
-    class C,L terminal;
-    class B,D,K decision;
+    class L,O outcome;
+    class C,N terminal;
+    class B,D,K,M decision;
 
 ```
 
@@ -88,7 +90,7 @@ After:  find event key
 | Input / state | Before | After |
 | --- | --- | --- |
 | Fresh `usage-731` | Append one $60 debit; balance becomes $40. | Same visible result, now inside an event-keyed transaction. |
-| Duplicate `usage-731` | A second debit could reach $20. | Return the original entry; balance stays $40. |
+| Duplicate `usage-731` | A second debit could reach -$20. | Return the original entry; balance stays $40. |
 | Two concurrent requests | Both may append. | One append wins; the other reloads the winning entry. |
 
 **Review focus:** Confirm the unique key includes `account_id` and

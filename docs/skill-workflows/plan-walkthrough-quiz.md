@@ -64,7 +64,7 @@ flow here.
 
 Post each usage event to the billing ledger once, even when a worker retries or
 two workers receive the same event. A $60 charge moves an account from $100 to
-$40 and never to $20 for a duplicate delivery.
+$40 and never to -$20 for a duplicate delivery.
 
 **One analogy**
 

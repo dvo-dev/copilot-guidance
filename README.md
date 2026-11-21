@@ -54,6 +54,10 @@ For the GitHub Copilot app, copy the text into
 Apply this setup step on each new machine, and repeat it when you change the
 global instructions.
 
+Repository-specific workflow documentation rules live in
+`.github/copilot-instructions.md`; do not copy that file into global
+instructions.
+
 ## Development pipeline
 
 Four skills turn an approved plan into a reviewed draft pull request and leave

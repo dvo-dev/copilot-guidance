@@ -47,21 +47,35 @@ flowchart TD
 
     subgraph FACTORY["Current automated factory"]
         PLAN{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"}}
-        INTAKE("1. Intake<br/>read plan, lock branch,<br/>resolve scope and settings")
+        INTAKE{"1. Intake<br/>preflight clear?"}
         REVIEW{{"2. Plan review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a>"}}
+        REVIEWDEC{"Plan review<br/>clear?"}
         BUILD("3. Implement<br/>todos, tests, and commits")
-        GATEA("4. Gate A<br/>deterministic checks")
+        GATEA{"4. Gate A<br/>green?"}
         LOCAL{{"5. Local review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/review-fix-loop.md'>review-fix-loop</a>"}}
-        GATEB("6. Gate B<br/>continue, report, or stop")
+        GATEB{"6. Gate B<br/>continue?"}
         PR{{"7. Draft PR review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/copilot-review-loop.md'>copilot-review-loop</a>"}}
         DESC{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a><br/>expose decisions, risks,<br/>tradeoffs, and required steps"}}
+        STOPB(["Stop<br/>no pull request"])
         HANDOFF("8. Handoff<br/>draft PR and decision packet")
 
-        PLAN --> INTAKE --> REVIEW --> BUILD
-        BUILD --> GATEA --> LOCAL --> GATEB --> PR --> DESC --> HANDOFF
+        PLAN --> INTAKE
+        INTAKE -->|yes| REVIEW
+        INTAKE -->|lock held, dirty tree,<br/>or setup blocked| STOPB
+        REVIEW --> REVIEWDEC
+        REVIEWDEC -->|yes: implement| BUILD
+        REVIEWDEC -->|review failure| STOPB
+        BUILD --> GATEA
+        GATEA -->|yes| LOCAL --> GATEB
+        GATEA -->|no: repair failed| STOPB
+        GATEB -->|yes| PR --> HANDOFF
+        GATEB -->|no: stop or report| STOPB
+        PR -->|new draft: invoke| DESC
     end
 
     APPROVE --> PLAN
+    REVIEWDEC -.->|escalation: reapprove| APPROVE
+    BUILD -.->|scope change: reapprove| APPROVE
 
     subgraph REVIEWPR["Meat proxy: understand and judge the draft PR"]
         FLOW{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"}}
@@ -70,25 +84,30 @@ flowchart TD
         HUMAN{"Human reviewer:<br/>push back, defer,<br/>enforce, or accept?"}
     end
 
-    HANDOFF --> FLOW --> HUMAN
-    HANDOFF --> ANNOTATE --> CHOICES
-    DESC -.-> CHOICES
+    HANDOFF -.->|manual: walkthrough| FLOW
+    FLOW -.->|human interpretation| HUMAN
+    HANDOFF -.->|manual: annotation| ANNOTATE
+    ANNOTATE -.->|data feed: review focus| CHOICES
+    DESC -.->|data feed: decisions and risks| CHOICES
     CHOICES --> HUMAN
-    HUMAN -->|adjustment needed| REWORK("Manual revision<br/>to intent, plan, or code")
-    REWORK -.-> PLAN
+    HUMAN -->|adjustment needed| REWORK{"Scope or<br/>policy changed?"}
+    REWORK -.->|yes: reapprove| APPROVE
+    REWORK -.->|no: restart in scope| PLAN
     HUMAN -->|ready| MERGED(["Person merges PR"])
-    MERGED --> REFINE{{"Post-merge: <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"}}
+    MERGED -.->|manual: guidance improvement| REFINE{{"Post-merge: <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"}}
 
     classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
     classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
     classDef human fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
+    classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
+    classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
     classDef optional fill:#16161e,stroke:#565f89,stroke-width:1px,color:#a9b1d6,stroke-dasharray:4 3;
-    class TECH,INTAKE,BUILD,GATEA,GATEB,HANDOFF,CHOICES stage;
+    class TECH,BUILD,HANDOFF,CHOICES stage;
     class VISUAL,REUSE,WALK,PLAN,REVIEW,LOCAL,PR,DESC,FLOW,ANNOTATE,REFINE delegated;
     class NEED,APPROVE,MERGED human;
-    class TEACH,HUMAN decision;
-    class REWORK optional;
+    class TEACH,INTAKE,REVIEWDEC,GATEA,GATEB,HUMAN,REWORK decision;
+    class STOPB terminal;
 
     style SHAPE fill:#14151f,stroke:#565f89,stroke-width:1px,color:#bb9af7;
     style FACTORY fill:#16161e,stroke:#7aa2f7,stroke-width:1.5px,color:#c0caf5;
@@ -130,8 +149,8 @@ the original entry and leaves the balance at $40.
 | Factory phase | Human-readable outcome |
 | --- | --- |
 | Intake | Goal, $100-to-$40 scenario, no double charge, scope, checks, and non-goals recorded. |
-| Plan review | One concurrency finding became a required fix. Fractional-cent rounding was escalated. |
-| Build and Gate A | Preview stayed read-only; focused and full checks passed. |
+| Plan review | One concurrency finding became a required fix. The fractional-cent policy question was recorded as a non-blocking deferral for human judgment. |
+| Build and Gate A | Focused and full checks passed; the preview/posting boundary remained a local-review concern. |
 | Local review | One fix cycle repaired a preview persistence leak and simplified duplicate entry construction; the confirmation review found no fix items. |
 | PR review | One Copilot review cycle fixed conflict-result mapping and deferred balance caching. |
 | Handoff | Draft PR remains open; the final push's review was requested but not awaited. |

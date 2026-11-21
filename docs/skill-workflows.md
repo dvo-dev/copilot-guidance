@@ -176,7 +176,6 @@ not unlimited autonomous work.
 | Decisions | In-scope choices can continue on autopilot when they are recorded. Scope and policy changes still require a new decision. |
 | Generated-code comprehension | A post-draft walkthrough is currently manual. The walkthrough helps locate segment-level disagreement, but `plan-to-pr` does not automatically turn that feedback into a new implementation pass. |
 | Review limits | Valid work can remain when a fix-cycle cap is reached. The factory needs a durable queue for unfinished work. |
-| Concurrency | Human review, another push, a no-longer-draft PR, or a conflict causes a stop or handoff. Safe reconciliation and resume remain an improvement area. |
 | Delivery | The final review after the last push is not awaited. Readiness, merge, deployment, and rollback remain manual. |
 | Improvement | Post-merge learning is manual today. `refine-agent-guidance` requires bounded trials and evidence before changes are accepted; guidance publication still requires separate authorization. A true RSI loop is a major future improvement area. |
 

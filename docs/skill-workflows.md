@@ -58,7 +58,7 @@ flowchart TD
 
     subgraph REVIEWPR["Meat proxy: understand and judge the draft PR"]
         FLOW["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"]
-        ANNOTATE["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/pr-annotations.md'>pr-annotations</a><br/>expose behavior impact<br/>and decision choices"]
+        ANNOTATE["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/pr-annotations.md'>pr-annotations</a><br/>help reviewers follow the diff<br/>with inline commentary"]
         CHOICES["Decision choices exposed<br/>accept, adjust, defer, or enforce"]
         HUMAN{"Human reviewer:<br/>push back, defer,<br/>enforce, or accept?"}
     end

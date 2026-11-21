@@ -1,0 +1,74 @@
+# Visual explanations
+
+[Back to the code factory map](../skill-workflows.md) |
+[Canonical skill source](../../skills/visual-explanations/SKILL.md)
+
+This skill supplies the compact diagrams, tables, and decisions that support
+factory explanations and PR communication.
+
+**Use it when:** one decision, call path, branch, or outcome comparison needs a
+compact explanation.
+
+**Result:** a verified conclusion with only the diagram or table that helps.
+
+```mermaid
+flowchart TD
+    A["Frame the exact<br/>decision or question"] --> B{"Simple property<br/>or location?"}
+    B -->|Yes| C["Answer directly<br/>with a citation"]
+    B -->|No| D["Trace real entry points,<br/>data, calls, and side effects"]
+    D --> E["Derive exact scenarios<br/>and material early exits"]
+    E --> F{"Best visual"}
+    F -->|Relationships| G["Call graph"]
+    F -->|Branches| H["Decision tree"]
+    F -->|Input and result comparison| I["Outcome table"]
+    G --> J["Present conclusion,<br/>evidence, and limit"]
+    H --> J
+    I --> J
+```
+
+This skill is read-only unless another authorized task explicitly permits
+implementation or posting.
+
+For a pull request description, this skill owns the visual form only.
+[Pull request descriptions](pr-descriptions.md) owns the summary order,
+visible decisions, collapsed support, and posting boundary. Refer to that page
+instead of duplicating the PR layout here.
+
+## Synthetic example
+
+<details>
+<summary>Open the synthetic decision and outcome visual</summary>
+
+> [!NOTE]
+> This billing ledger scenario is fictional. It demonstrates the visual, not
+> production behavior.
+
+> [!IMPORTANT]
+> Synthetic conclusion: a duplicate event must return the original ledger entry
+> and perform no new write. The idempotency lookup and the unique event key must
+> protect the same write transaction.
+
+```mermaid
+flowchart TD
+    E["Post usage event `usage-731`"] --> X{"Existing ledger entry?"}
+    X -->|Yes| R["Return original entry<br/>balance stays $40"]
+    X -->|No| V{"Policy allows charge?"}
+    V -->|No| J["Reject<br/>no write"]
+    V -->|Yes| A["Append $60 debit<br/>under unique event key"]
+    A --> C{"Concurrent conflict?"}
+    C -->|Yes| R
+    C -->|No| B["Commit entry<br/>balance $100 -> $40"]
+```
+
+| Input state | Result | New ledger write | Final balance |
+| --- | --- | ---: | ---: |
+| Fresh event, $100 balance | Charge $60 | 1 | $40 |
+| Same event retried after success | Return original entry | 0 | $40 |
+| Same event posted concurrently twice | One charge; losing request reloads it | 1 total | $40 |
+| Invoice preview | Return calculated amount | 0 | $100 |
+| Existing policy rejects insufficient funds | Return policy error | 0 | $100 |
+
+The graph shows control flow. The table shows the observable outcomes. Neither
+states that the behavior exists until source and tests verify it.
+
+</details>

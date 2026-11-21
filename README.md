@@ -3,6 +3,12 @@
 Reusable agent skills for code explanations, reviews, pull request descriptions,
 implementation planning, and an agentic development pipeline.
 
+## Workflow documentation
+
+See [Code factory workflows](docs/skill-workflows.md) for Mermaid diagrams of
+the current factory loop, its manual boundaries, and each individual skill. The
+factory diagram links back to the relevant skill breakdowns.
+
 ## Install
 
 With a GitHub CLI version that includes `gh skill`, install all skills for GitHub

@@ -11,13 +11,14 @@ before approving a plan or a code decision.
 **Result:** one scenario carried from entry point to final state, with a recap.
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
 flowchart TD
     A["Identify entry point,<br/>revision, actor, and scenario"] --> B["Trace every function<br/>that this scenario reaches"]
     B --> C["Split the path<br/>into major logical segments"]
     C --> D["Show overview map,<br/>scenario, and starting state"]
     D --> E["Show one segment:<br/>chain, excerpt, state, and sources"]
     E --> V{"Focused branch or<br/>outcome comparison?"}
-    V -->|Yes| X["Invoke visual-explanations<br/>for this decision"]
+    V -->|Yes| X["Invoke <a href='visual-explanations.md'>visual-explanations</a><br/>for this decision"]
     X --> F{"User chooses next?"}
     V -->|No| F
     F -->|Next segment| E
@@ -25,7 +26,6 @@ flowchart TD
     G --> E
     F -->|Stop or last segment| H["Show checkpoint table,<br/>full chain, and invariants"]
 
-    click X href "visual-explanations.md" "Open the visual-explanations workflow"
 ```
 
 For a focused branch or output comparison, use

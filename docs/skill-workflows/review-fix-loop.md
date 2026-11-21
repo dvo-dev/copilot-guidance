@@ -12,11 +12,12 @@ review, and bounded fixes before a PR.
 **Result:** clean, capped, escalated, or failed local review state.
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
 flowchart TD
     A["Preflight branch,<br/>scope, and worktree"] --> B["Run format, lint,<br/>types, and tests"]
     B -->|Fail outside baseline| C["Repair or stop"]
-    B -->|Pass| E["Invoke surgical-refactoring<br/>and consume decisions"]
-    E --> G["Invoke adversarial-review<br/>and consume dispositions"]
+    B -->|Pass| E["Invoke <a href='surgical-refactoring.md'>surgical-refactoring</a><br/>and consume decisions"]
+    E --> G["Invoke <a href='adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"]
     G --> H{"Outcome"}
     H -->|No fix items| I["Done"]
     H -->|Failure or approach escalation| J["Stop and report"]
@@ -25,8 +26,6 @@ flowchart TD
     L --> G
     H -->|Fix-cycle cap reached| M["Report valid findings<br/>that remain unfixed"]
 
-    click E href "surgical-refactoring.md" "Open the surgical-refactoring workflow"
-    click G href "adversarial-review.md" "Open the adversarial-review workflow"
 ```
 
 Every fix is followed by a fresh review. The simplification pass runs once,

@@ -12,6 +12,7 @@ a large or generated PR.
 **Result:** one comment-only review with an overview and a few inline notes.
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
 flowchart TD
     A["Read PR state, revisions,<br/>reviews, and existing annotations"] --> B{"Eligible and changed<br/>at this head?"}
     B -->|No| C["Stop<br/>or link the existing annotation"]
@@ -20,14 +21,13 @@ flowchart TD
     D -->|No| F["Full mode<br/>compare merge base to head"]
     E --> G["Select at most six<br/>behavioral production segments"]
     F --> G
-    G --> H["Apply visual-explanations<br/>trace and consume the result"]
+    G --> H["Apply <a href='visual-explanations.md'>visual-explanations</a><br/>trace and consume the result"]
     H --> I["Classify concern<br/>and state stated or inferred why"]
     I --> J["Draft overview and inline notes"]
     J --> K{"Head still unchanged?"}
     K -->|No| L["Stop<br/>Do not post stale anchors"]
     K -->|Yes| M["Submit one<br/>comment-only review"]
 
-    click H href "visual-explanations.md" "Open the visual-explanations workflow"
 ```
 
 Annotations explain control flow, changed outcomes, and review focus. They do

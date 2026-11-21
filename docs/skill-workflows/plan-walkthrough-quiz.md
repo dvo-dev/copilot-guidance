@@ -11,12 +11,13 @@ the factory.
 **Result:** a code-verified teaching sequence and a recap table in the plan.
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
 flowchart TD
     A["Locate the plan<br/>and current code revision"] --> B["Verify claims<br/>and label C, P, or D"]
     B --> C["Teach ELI5 goal<br/>milestones, analogy, and persona"]
     C --> D["Walk through<br/>each implementation task"]
     D --> V{"Diagram needed?"}
-    V -->|Yes| X["Invoke visual-explanations<br/>for this task"]
+    V -->|Yes| X["Invoke <a href='visual-explanations.md'>visual-explanations</a><br/>for this task"]
     X --> E["Ask one scenario question"]
     V -->|No| E
     E --> F{"Correct?"}
@@ -28,7 +29,6 @@ flowchart TD
     J -->|Need another layer| D
     J -->|Yes| K["Request plan approval"]
 
-    click X href "visual-explanations.md" "Open the visual-explanations workflow"
 ```
 
 The workflow can update the plan or session artifact. It does not change code,

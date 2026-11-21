@@ -17,33 +17,37 @@ push back on specific segments, and decide readiness, merge, and release.
 
 ## The end-to-end workflow
 
+All Mermaid diagrams in this documentation use a fixed Tokyo Night palette.
+Hosts that ignore Mermaid init directives use their own diagram theme.
+
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
 flowchart TD
     NEED["Person: business intent<br/>or desired behavior change"]
 
     subgraph SHAPE["Meat proxy: shape technical intent"]
-        VISUAL["visual-explanations<br/>make paths and tradeoffs readable"]
-        REUSE["surgical-refactoring<br/>reuse existing scaffolding and contracts"]
+        VISUAL["<a href='skill-workflows/visual-explanations.md'>visual-explanations</a><br/>make paths and tradeoffs readable"]
+        REUSE["<a href='skill-workflows/surgical-refactoring.md'>surgical-refactoring</a><br/>reuse existing scaffolding and contracts"]
         TECH["Human-readable technical intent<br/>assumptions, reuse, and open choices"]
     end
 
     NEED --> VISUAL --> TECH
     NEED --> REUSE --> TECH
     TECH --> TEACH{"Need a teaching pass?"}
-    TEACH -->|Yes| WALK["Optional: plan-walkthrough-quiz"]
+    TEACH -->|Yes| WALK["Optional: <a href='skill-workflows/plan-walkthrough-quiz.md'>plan-walkthrough-quiz</a>"]
     TEACH -->|No| APPROVE["Person approves plan"]
     WALK --> APPROVE
 
     subgraph FACTORY["Current automated factory"]
-        PLAN["plan-to-pr coordinator<br/>owns the complete pipeline"]
+        PLAN["<a href='../skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"]
         INTAKE["1. Intake<br/>read plan, lock branch,<br/>resolve scope and settings"]
-        REVIEW["2. Plan review<br/>invoke adversarial-review"]
+        REVIEW["2. Plan review<br/>invoke <a href='skill-workflows/adversarial-review.md'>adversarial-review</a>"]
         BUILD["3. Implement<br/>todos, tests, and commits"]
         GATEA["4. Gate A<br/>deterministic checks"]
-        LOCAL["5. Local review<br/>invoke review-fix-loop"]
+        LOCAL["5. Local review<br/>invoke <a href='skill-workflows/review-fix-loop.md'>review-fix-loop</a>"]
         GATEB["6. Gate B<br/>continue, report, or stop"]
-        PR["7. Draft PR review<br/>invoke copilot-review-loop"]
-        DESC["pr-descriptions<br/>expose decisions, risks,<br/>tradeoffs, and required steps"]
+        PR["7. Draft PR review<br/>invoke <a href='skill-workflows/copilot-review-loop.md'>copilot-review-loop</a>"]
+        DESC["<a href='skill-workflows/pr-descriptions.md'>pr-descriptions</a><br/>expose decisions, risks,<br/>tradeoffs, and required steps"]
         HANDOFF["8. Handoff<br/>draft PR and decision packet"]
 
         PLAN --> INTAKE --> REVIEW --> BUILD
@@ -53,8 +57,8 @@ flowchart TD
     APPROVE --> PLAN
 
     subgraph REVIEWPR["Meat proxy: understand and judge the draft PR"]
-        FLOW["code-flow-walkthrough<br/>trace generated-code intent by segment"]
-        ANNOTATE["pr-annotations<br/>expose behavior impact<br/>and decision choices"]
+        FLOW["<a href='skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"]
+        ANNOTATE["<a href='skill-workflows/pr-annotations.md'>pr-annotations</a><br/>expose behavior impact<br/>and decision choices"]
         CHOICES["Decision choices exposed<br/>accept, adjust, defer, or enforce"]
         HUMAN{"Human reviewer:<br/>push back, defer,<br/>enforce, or accept?"}
     end
@@ -66,19 +70,7 @@ flowchart TD
     HUMAN -->|adjustment needed| REWORK["Manual revision<br/>to intent, plan, or code"]
     REWORK -.-> PLAN
     HUMAN -->|ready| MERGED["Person merges PR"]
-    MERGED --> REFINE["Post-merge: refine-agent-guidance<br/>manual evidence-driven improvement"]
-
-    click VISUAL href "skill-workflows/visual-explanations.md" "Open the visual-explanations workflow"
-    click REUSE href "skill-workflows/surgical-refactoring.md" "Open the surgical-refactoring workflow"
-    click WALK href "skill-workflows/plan-walkthrough-quiz.md" "Open the plan-walkthrough-quiz workflow"
-    click PLAN href "../skills/plan-to-pr/SKILL.md" "Open the plan-to-pr skill source"
-    click REVIEW href "skill-workflows/adversarial-review.md" "Open the adversarial-review workflow"
-    click LOCAL href "skill-workflows/review-fix-loop.md" "Open the review-fix-loop workflow"
-    click PR href "skill-workflows/copilot-review-loop.md" "Open the copilot-review-loop workflow"
-    click DESC href "skill-workflows/pr-descriptions.md" "Open the pr-descriptions workflow"
-    click FLOW href "skill-workflows/code-flow-walkthrough.md" "Open the code-flow-walkthrough workflow"
-    click ANNOTATE href "skill-workflows/pr-annotations.md" "Open the pr-annotations workflow"
-    click REFINE href "skill-workflows/refine-agent-guidance.md" "Open the refine-agent-guidance workflow"
+    MERGED --> REFINE["Post-merge: <a href='skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"]
 ```
 
 Plan review and local hardening are delegation boundaries. Their own pages show

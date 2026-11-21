@@ -54,26 +54,24 @@ demonstrates the visual, not production behavior.
 entry and perform no new write. The idempotency lookup and the unique event key
 must protect the same write transaction.
 
-```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
-flowchart TD
-    E(["Post usage event `usage-731`"]) --> X{"Existing ledger entry?"}
-    X -->|Yes| R(["Return original entry<br/>balance stays $40"])
-    X -->|No| V{"Policy allows charge?"}
-    V -->|No| J(["Reject<br/>no write"])
-    V -->|Yes| A("Append $60 debit<br/>under unique event key")
-    A --> C{"Concurrent conflict?"}
-    C -->|Yes| R
-    C -->|No| B(["Commit entry<br/>balance $100 -> $40"])
-
-    classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
-    classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
-    classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
-    classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
-    class A stage;
-    class E,R,B outcome;
-    class J terminal;
-    class X,V,C decision;
+```text
+post(usage-731)
+    |
+    +-- entry exists -> return original entry
+    |                   no write; balance stays $40
+    |
+    +-- no entry -> check policy
+                      |
+                      +-- rejected -> policy error
+                      |               no write; balance stays $100
+                      |
+                      +-- allowed -> append $60 debit under unique event key
+                                       |
+                                       +-- conflict -> return winner's entry
+                                       |               no second write; $40
+                                       |
+                                       +-- no conflict -> commit
+                                                          balance $100 -> $40
 ```
 
 | Input state | Result | New ledger write | Final balance |

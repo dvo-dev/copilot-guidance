@@ -31,7 +31,11 @@ has a workflow page.
   `**Synthetic example:**`; do not use GitHub alert syntax there because
   GitHub renders it as a normal blockquote with the `[!NOTE]` token visible.
   Top-level alerts may use GitHub alert syntax.
-- Use Mermaid and keep one visual system. Copy the current `init` line from
+- Synthetic output must look like what the skill actually produces. If the
+  skill draws ASCII in fenced `text` blocks, the synthetic output does too;
+  the Mermaid rules below apply only to the workflow diagrams that document
+  the skill.
+- Use Mermaid for workflow diagrams and keep one visual system. Copy the current `init` line from
   `docs/skill-workflows.md`, and use only the canonical class definitions from
   its `classDef` block. A diagram may omit classes it does not use, but a reused
   class name must keep the same value. Use rounded nodes for stages, hexagons

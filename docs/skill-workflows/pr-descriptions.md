@@ -64,21 +64,12 @@ The billing ledger now posts one $60 debit for each usage event. Repeated or
 concurrent delivery of the same event ID returns the original entry without a
 second balance change.
 
-```mermaid
-%%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
-flowchart LR
-    EVENT(["Usage event: usage-731"]) --> FOUND{"Ledger entry exists?"}
-    FOUND -->|Yes| RETURN(["Return original $60 entry"])
-    FOUND -->|No| VALIDATE("Calculate and validate charge")
-    VALIDATE --> POST("Append debit in ledger transaction")
-    POST --> BALANCE(["Balance: $100 -> $40"])
-
-    classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
-    classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
-    classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
-    class VALIDATE,POST stage;
-    class EVENT,RETURN,BALANCE outcome;
-    class FOUND decision;
+```text
+UsageChargeWorker.post(usage-731)
+  |-- entry already exists        -> return original $60 entry, no new debit
+  |-- concurrent post wins first  -> return the winner's entry, no new debit
+  `-- new event                   -> calculate charge -> append $60 debit
+                                     -> balance $100 -> $40
 ```
 
 ### What changed and why

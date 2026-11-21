@@ -40,48 +40,32 @@ flowchart TD
 
     NEED --> VISUAL --> TECH
     NEED --> REUSE --> TECH
-    TECH --> TEACH{"Need a teaching pass?"}
-    TEACH -->|Yes| WALK{{"Optional: <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/plan-walkthrough-quiz.md'>plan-walkthrough-quiz</a>"}}
-    TEACH -->|No| APPROVE(["Person approves plan"])
+    TECH -.->|optional: teaching pass| WALK{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/plan-walkthrough-quiz.md'>plan-walkthrough-quiz</a>"}}
+    TECH --> APPROVE(["Person approves plan"])
     WALK --> APPROVE
 
-    subgraph FACTORY["Current automated factory"]
-        PLAN{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"}}
-        INTAKE{"1. Intake<br/>preflight clear?"}
+    subgraph FACTORY["plan-to-pr: current automated factory"]
+        INTAKE("1. Intake<br/>check branch, worktree,<br/>and run lock")
         REVIEW{{"2. Plan review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a>"}}
-        REVIEWDEC{"Plan review<br/>clear?"}
         BUILD("3. Implement<br/>todos, tests, and commits")
-        GATEA{"4. Gate A<br/>green?"}
+        GATEA("4. Gate A<br/>run deterministic checks")
         LOCAL{{"5. Local review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/review-fix-loop.md'>review-fix-loop</a>"}}
-        GATEB{"6. Gate B<br/>continue?"}
+        GATEB("6. Gate B<br/>assess local review result")
         PR{{"7. Draft PR review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/copilot-review-loop.md'>copilot-review-loop</a>"}}
         DESC{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a><br/>expose decisions, risks,<br/>tradeoffs, and required steps"}}
-        STOPB(["Stop<br/>no pull request"])
         HANDOFF("8. Handoff<br/>draft PR and decision packet")
 
-        PLAN --> INTAKE
-        INTAKE -->|yes| REVIEW
-        INTAKE -->|lock held, dirty tree,<br/>or setup blocked| STOPB
-        REVIEW --> REVIEWDEC
-        REVIEWDEC -->|yes: implement| BUILD
-        REVIEWDEC -->|review failure| STOPB
-        BUILD --> GATEA
-        GATEA -->|yes| LOCAL --> GATEB
-        GATEA -->|no: repair failed| STOPB
-        GATEB -->|yes| PR --> HANDOFF
-        GATEB -->|no: stop or report| STOPB
         PR -->|new draft: invoke| DESC
+        INTAKE ==> REVIEW ==> BUILD ==> GATEA ==> LOCAL ==> GATEB ==> PR ==> HANDOFF
     end
 
-    APPROVE --> PLAN
-    REVIEWDEC -.->|escalation: reapprove| APPROVE
-    BUILD -.->|scope change: reapprove| APPROVE
+    APPROVE ==>|start <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/skills/plan-to-pr/SKILL.md'>plan-to-pr</a>| INTAKE
 
     subgraph REVIEWPR["Meat proxy: understand and judge the draft PR"]
         FLOW{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"}}
         ANNOTATE{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/pr-annotations.md'>pr-annotations</a><br/>help reviewers follow the diff<br/>with inline commentary"}}
         CHOICES("Decision choices exposed<br/>accept, adjust, defer, or enforce")
-        HUMAN{"Human reviewer:<br/>push back, defer,<br/>enforce, or accept?"}
+        HUMAN{"Human reviewer:<br/>ready, adjust in scope,<br/>or change scope/policy?"}
     end
 
     HANDOFF -.->|manual: walkthrough| FLOW
@@ -90,11 +74,10 @@ flowchart TD
     ANNOTATE -.->|data feed: review focus| CHOICES
     DESC -.->|data feed: decisions and risks| CHOICES
     CHOICES --> HUMAN
-    HUMAN -->|adjustment needed| REWORK{"Scope or<br/>policy changed?"}
-    REWORK -.->|yes: reapprove| APPROVE
-    REWORK -.->|no: restart in scope| PLAN
     HUMAN -->|ready| MERGED(["Person merges PR"])
     MERGED -.->|manual: guidance improvement| REFINE{{"Post-merge: <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"}}
+    HUMAN -->|in-scope adjustment| RERUN(["Rerun plan-to-pr"])
+    HUMAN -->|scope or policy change| REAPPROVE(["Revise and reapprove plan"])
 
     classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
     classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
@@ -103,16 +86,19 @@ flowchart TD
     classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
     classDef optional fill:#16161e,stroke:#565f89,stroke-width:1px,color:#a9b1d6,stroke-dasharray:4 3;
-    class TECH,BUILD,HANDOFF,CHOICES stage;
-    class VISUAL,REUSE,WALK,PLAN,REVIEW,LOCAL,PR,DESC,FLOW,ANNOTATE,REFINE delegated;
-    class NEED,APPROVE,MERGED human;
-    class TEACH,INTAKE,REVIEWDEC,GATEA,GATEB,HUMAN,REWORK decision;
-    class STOPB terminal;
+    class TECH,INTAKE,BUILD,GATEA,GATEB,HANDOFF,CHOICES stage;
+    class VISUAL,REUSE,WALK,REVIEW,LOCAL,PR,DESC,FLOW,ANNOTATE,REFINE delegated;
+    class NEED,APPROVE,MERGED,RERUN,REAPPROVE human;
+    class HUMAN decision;
 
     style SHAPE fill:#14151f,stroke:#565f89,stroke-width:1px,color:#bb9af7;
     style FACTORY fill:#16161e,stroke:#7aa2f7,stroke-width:1.5px,color:#c0caf5;
     style REVIEWPR fill:#14151f,stroke:#bb9af7,stroke-width:1px,color:#bb9af7;
 ```
+
+The diagram shows the path that reaches a pull request. Intake, plan review,
+implementation, Gate A, and Gate B can each stop the run first. Then the run
+opens no pull request: it reports the blocker or asks to reapprove the plan.
 
 Plan review and local hardening are delegation boundaries. Their own pages show
 the branches and fix cycles used inside those calls.
@@ -193,6 +179,7 @@ not unlimited autonomous work.
 | Intent | A person still defines product intent, scope, plan, and initial approval. |
 | Environment | Missing credentials, unavailable tooling, and unsupported repository state can block intake or checks. |
 | Decisions | In-scope choices can continue on autopilot when they are recorded. Scope and policy changes still require a new decision. |
+| Manual QA | Add a hands-on check alongside unit tests: a person tries the changed workflow and compares what they see with the acceptance criteria. For a web UI, replay the same steps in a headless browser with Playwright, record a short video with FFmpeg, and link it from the draft PR so reviewers can see the behavior. |
 | Generated-code comprehension | A post-draft walkthrough is currently manual. The walkthrough helps locate segment-level disagreement, but `plan-to-pr` does not automatically turn that feedback into a new implementation pass. |
 | Review limits | Valid work can remain when a fix-cycle cap is reached. The factory needs a durable queue for unfinished work. |
 | Delivery | The final review after the last push is not awaited. Readiness, merge, deployment, and rollback remain manual. |

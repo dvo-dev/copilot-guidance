@@ -100,7 +100,7 @@ flowchart LR
 
 - Unit: fresh post, duplicate event, concurrent retry, and preview
 - Local: format, lint, type check, full unit suite
-- PR: Copilot review and CI completed
+- PR: review and CI pending until the draft opens
 
 In a real PR, longer evidence, accepted decisions, and test output would move
 into named collapsed sections. Questions for a named person would go in a PR

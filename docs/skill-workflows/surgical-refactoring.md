@@ -20,7 +20,9 @@ flowchart TD
     C --> D("Compare concrete<br/>small designs")
     D --> E{"Does a design preserve<br/>every contract?"}
     E -->|No| F(["Keep best preserving design<br/>or request approval"])
-    E -->|Yes| G("Apply smallest design<br/>when edits are authorized")
+    E -->|Yes| AUTH{"Edits<br/>authorized?"}
+    AUTH -->|No: analysis only| RETURN(["Return candidates,<br/>contracts, and validation limits"])
+    AUTH -->|Yes| G("Apply smallest design")
     G --> H("Validate real entry points<br/>and forbidden work")
     H --> I("Remove obsolete code<br/>and keep surviving coverage")
     I --> J(["Report before and after,<br/>checks, and limits"])
@@ -30,9 +32,9 @@ flowchart TD
     classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
     class A,B,C,D,G,H,I stage;
-    class J outcome;
+    class J,RETURN outcome;
     class F terminal;
-    class E decision;
+    class E,AUTH decision;
 ```
 
 The workflow prefers evidence over line counts or wrapper counts. It keeps

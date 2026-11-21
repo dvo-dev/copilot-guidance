@@ -23,14 +23,16 @@ flowchart TD
     A("Check clean branch,<br/>green gates, scope, and gh access") --> B{"PR state<br/>for this branch?"}
     B -->|No PR| C{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a><br/>for the draft body"}}
     C --> D("Push and open<br/>draft PR")
-    B -->|Open draft| E("Reuse draft PR<br/>without editing its body")
-    B -->|Open non-draft, closed,<br/>merged, or lookup error| Z(["Stop and hand off<br/>do not push"])
+    B -->|Open draft,<br/>head owner matches| E("Reuse draft PR<br/>without editing its body")
+    B -->|Open non-draft, closed,<br/>merged, lookup error,<br/>or head owner mismatch| Z(["Stop and hand off<br/>do not push"])
     D --> F("Request Copilot review")
     E --> P("Push local HEAD<br/>without force")
     P --> F
     F --> G("Wait for review and CI")
     G --> H("Collect threads and overview findings")
-    H --> I{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"}}
+    H --> CLEAN{"No findings and<br/>CI green?"}
+    CLEAN -->|Yes: done-clean| O
+    CLEAN -->|No| I{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"}}
     I --> J("Classify CI failures<br/>and rerun failed Actions once")
     J --> K{"Actionable item<br/>and cycle left?"}
     K -->|Yes| L("Test-first fix, gate,<br/>commit, and push")
@@ -51,7 +53,7 @@ flowchart TD
     class C,I delegated;
     class O outcome;
     class Z terminal;
-    class B,K,N decision;
+    class B,CLEAN,K,N decision;
 
 ```
 

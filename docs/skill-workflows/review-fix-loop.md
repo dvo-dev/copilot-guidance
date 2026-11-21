@@ -21,7 +21,10 @@ review, and bounded fixes before a PR.
 %%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true,"nodeSpacing":30,"rankSpacing":34,"padding":10}}}%%
 flowchart TD
     A("Preflight branch,<br/>scope, and worktree") --> B("Run format, lint,<br/>types, and tests")
-    B -->|Fail outside baseline| C(["Repair or stop"])
+    B -->|Fail outside baseline| REPAIRDEC{"Can repair<br/>in scope?"}
+    REPAIRDEC -->|Yes| REPAIR("Repair, commit,<br/>and rerun gate")
+    REPAIR --> B
+    REPAIRDEC -->|No| STOP(["Stop and report"])
     B -->|Pass| E{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/surgical-refactoring.md'>surgical-refactoring</a><br/>and consume candidates"}}
     E --> F("Verify candidates, decide<br/>apply, keep, or approve;<br/>rerun gate and commit")
     F --> G{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"}}
@@ -38,11 +41,11 @@ flowchart TD
     classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
     classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
-    class A,B,F,K,L stage;
+    class A,B,F,K,L,REPAIR stage;
     class E,G delegated;
     class I outcome;
-    class C,J,M terminal;
-    class H decision;
+    class STOP,J,M terminal;
+    class REPAIRDEC,H decision;
 
 ```
 
@@ -87,6 +90,7 @@ $40.
 **Commit:** `abc1234 Address review findings (cycle 1)`
 
 **Fresh confirmation review:** no fix items
+
 **Needs human judgment:** define the rounding rule for a fractional cent
 
 </details>

@@ -47,7 +47,7 @@ flowchart TD
 
     subgraph FACTORY["Current automated factory"]
         PLAN{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"}}
-        INTAKE("1. Intake<br/>read plan, lock branch,<br/>resolve scope and settings")
+        INTAKE{"1. Intake<br/>preflight clear?"}
         REVIEW{{"2. Plan review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a>"}}
         REVIEWDEC{"Plan review<br/>clear?"}
         BUILD("3. Implement<br/>todos, tests, and commits")
@@ -59,9 +59,11 @@ flowchart TD
         STOPB(["Stop<br/>no pull request"])
         HANDOFF("8. Handoff<br/>draft PR and decision packet")
 
-        PLAN --> INTAKE --> REVIEW --> REVIEWDEC
+        PLAN --> INTAKE
+        INTAKE -->|yes| REVIEW
+        INTAKE -->|lock held, dirty tree,<br/>or setup blocked| STOPB
+        REVIEW --> REVIEWDEC
         REVIEWDEC -->|yes: implement| BUILD
-        REVIEWDEC -.->|escalation: reapprove| APPROVE
         REVIEWDEC -->|review failure| STOPB
         BUILD --> GATEA
         GATEA -->|yes| LOCAL --> GATEB
@@ -72,6 +74,8 @@ flowchart TD
     end
 
     APPROVE --> PLAN
+    REVIEWDEC -.->|escalation: reapprove| APPROVE
+    BUILD -.->|scope change: reapprove| APPROVE
 
     subgraph REVIEWPR["Meat proxy: understand and judge the draft PR"]
         FLOW{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"}}
@@ -99,10 +103,10 @@ flowchart TD
     classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
     classDef optional fill:#16161e,stroke:#565f89,stroke-width:1px,color:#a9b1d6,stroke-dasharray:4 3;
-    class TECH,INTAKE,BUILD,HANDOFF,CHOICES stage;
+    class TECH,BUILD,HANDOFF,CHOICES stage;
     class VISUAL,REUSE,WALK,PLAN,REVIEW,LOCAL,PR,DESC,FLOW,ANNOTATE,REFINE delegated;
     class NEED,APPROVE,MERGED human;
-    class TEACH,REVIEWDEC,GATEA,GATEB,HUMAN,REWORK decision;
+    class TEACH,INTAKE,REVIEWDEC,GATEA,GATEB,HUMAN,REWORK decision;
     class STOPB terminal;
 
     style SHAPE fill:#14151f,stroke:#565f89,stroke-width:1px,color:#bb9af7;
@@ -145,7 +149,7 @@ the original entry and leaves the balance at $40.
 | Factory phase | Human-readable outcome |
 | --- | --- |
 | Intake | Goal, $100-to-$40 scenario, no double charge, scope, checks, and non-goals recorded. |
-| Plan review | One concurrency finding became a required fix. The fractional-cent policy question was escalated and answered before Build. |
+| Plan review | One concurrency finding became a required fix. The fractional-cent policy question was recorded as a non-blocking deferral for human judgment. |
 | Build and Gate A | Focused and full checks passed; the preview/posting boundary remained a local-review concern. |
 | Local review | One fix cycle repaired a preview persistence leak and simplified duplicate entry construction; the confirmation review found no fix items. |
 | PR review | One Copilot review cycle fixed conflict-result mapping and deferred balance caching. |
@@ -153,8 +157,9 @@ the original entry and leaves the balance at $40.
 
 **Needs human judgment**
 
-1. May a usage debit take the account below zero?
-2. When is the remaining draft PR review evidence enough to make the PR ready?
+1. Which rule rounds a fractional cent into the ledger amount?
+2. May a usage debit take the account below zero?
+3. When is the remaining draft PR review evidence enough to make the PR ready?
 
 The handoff links the implementation, tests, and detailed skill reports without
 repeating their internal workflows.

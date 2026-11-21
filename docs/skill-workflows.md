@@ -49,8 +49,9 @@ flowchart TD
         PLAN{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"}}
         INTAKE("1. Intake<br/>read plan, lock branch,<br/>resolve scope and settings")
         REVIEW{{"2. Plan review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a>"}}
+        REVIEWDEC{"Plan review<br/>clear?"}
         BUILD("3. Implement<br/>todos, tests, and commits")
-        GATEA("4. Gate A<br/>deterministic checks")
+        GATEA{"4. Gate A<br/>green?"}
         LOCAL{{"5. Local review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/review-fix-loop.md'>review-fix-loop</a>"}}
         GATEB{"6. Gate B<br/>continue?"}
         PR{{"7. Draft PR review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/copilot-review-loop.md'>copilot-review-loop</a>"}}
@@ -58,11 +59,16 @@ flowchart TD
         STOPB(["Stop<br/>no pull request"])
         HANDOFF("8. Handoff<br/>draft PR and decision packet")
 
-        PLAN --> INTAKE --> REVIEW --> BUILD
-        BUILD --> GATEA --> LOCAL --> GATEB
+        PLAN --> INTAKE --> REVIEW --> REVIEWDEC
+        REVIEWDEC -->|yes: implement| BUILD
+        REVIEWDEC -.->|escalation: reapprove| APPROVE
+        REVIEWDEC -->|review failure| STOPB
+        BUILD --> GATEA
+        GATEA -->|yes| LOCAL --> GATEB
+        GATEA -->|no: repair failed| STOPB
         GATEB -->|yes| PR --> HANDOFF
         GATEB -->|no: stop or report| STOPB
-        PR -.->|delegated: new draft body| DESC
+        PR -->|new draft: invoke| DESC
     end
 
     APPROVE --> PLAN
@@ -74,15 +80,17 @@ flowchart TD
         HUMAN{"Human reviewer:<br/>push back, defer,<br/>enforce, or accept?"}
     end
 
-    HANDOFF --> FLOW --> HUMAN
-    HANDOFF --> ANNOTATE --> CHOICES
+    HANDOFF -.->|manual: walkthrough| FLOW
+    FLOW -.->|human interpretation| HUMAN
+    HANDOFF -.->|manual: annotation| ANNOTATE
+    ANNOTATE -.->|data feed: review focus| CHOICES
     DESC -.->|data feed: decisions and risks| CHOICES
     CHOICES --> HUMAN
     HUMAN -->|adjustment needed| REWORK{"Scope or<br/>policy changed?"}
     REWORK -.->|yes: reapprove| APPROVE
     REWORK -.->|no: restart in scope| PLAN
     HUMAN -->|ready| MERGED(["Person merges PR"])
-    MERGED --> REFINE{{"Post-merge: <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"}}
+    MERGED -.->|manual: guidance improvement| REFINE{{"Post-merge: <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"}}
 
     classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
     classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
@@ -91,10 +99,10 @@ flowchart TD
     classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
     classDef optional fill:#16161e,stroke:#565f89,stroke-width:1px,color:#a9b1d6,stroke-dasharray:4 3;
-    class TECH,INTAKE,BUILD,GATEA,HANDOFF,CHOICES stage;
+    class TECH,INTAKE,BUILD,HANDOFF,CHOICES stage;
     class VISUAL,REUSE,WALK,PLAN,REVIEW,LOCAL,PR,DESC,FLOW,ANNOTATE,REFINE delegated;
     class NEED,APPROVE,MERGED human;
-    class TEACH,GATEB,HUMAN,REWORK decision;
+    class TEACH,REVIEWDEC,GATEA,GATEB,HUMAN,REWORK decision;
     class STOPB terminal;
 
     style SHAPE fill:#14151f,stroke:#565f89,stroke-width:1px,color:#bb9af7;
@@ -137,7 +145,7 @@ the original entry and leaves the balance at $40.
 | Factory phase | Human-readable outcome |
 | --- | --- |
 | Intake | Goal, $100-to-$40 scenario, no double charge, scope, checks, and non-goals recorded. |
-| Plan review | One concurrency finding became a required fix. Fractional-cent rounding was escalated. |
+| Plan review | One concurrency finding became a required fix. The fractional-cent policy question was escalated and answered before Build. |
 | Build and Gate A | Focused and full checks passed; the preview/posting boundary remained a local-review concern. |
 | Local review | One fix cycle repaired a preview persistence leak and simplified duplicate entry construction; the confirmation review found no fix items. |
 | PR review | One Copilot review cycle fixed conflict-result mapping and deferred balance caching. |
@@ -145,9 +153,8 @@ the original entry and leaves the balance at $40.
 
 **Needs human judgment**
 
-1. Which rule rounds a fractional cent into the ledger amount?
-2. May a usage debit take the account below zero?
-3. When is the remaining draft PR review evidence enough to make the PR ready?
+1. May a usage debit take the account below zero?
+2. When is the remaining draft PR review evidence enough to make the PR ready?
 
 The handoff links the implementation, tests, and detailed skill reports without
 repeating their internal workflows.

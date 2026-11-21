@@ -17,11 +17,12 @@ flowchart TD
     A("Resolve mode, target,<br/>intent, and reviewer effort") --> B("Freeze one identical<br/>review packet")
     B --> C{{"Anthropic reviewer<br/>read-only and isolated"}}
     B --> D{{"OpenAI reviewer<br/>read-only and isolated"}}
-    C --> E("Save both raw results")
-    D --> E
-    E --> F{"Repository state<br/>unchanged?"}
-    F -->|No: retry once| B
-    F -->|Yes| G("Cluster duplicate findings")
+    C --> F{"Repository state<br/>unchanged?"}
+    D --> F
+    F -->|No: first drift| B
+    F -->|No: second drift| T(["Stop<br/>discard round"])
+    F -->|Yes| E("Save both raw results")
+    E --> G("Cluster duplicate findings")
     G --> H("Verify each trigger<br/>and cited contract")
     H --> I{"Reject a high-impact<br/>or agreed finding?"}
     I -->|Yes| J{{"Run a fresh validator"}}
@@ -33,10 +34,12 @@ flowchart TD
     classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
     classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
     classDef human fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
+    classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
     class A,B,E,G,H,K,L stage;
     class C,D,J delegated;
     class M human;
+    class T terminal;
     class F,I decision;
 ```
 

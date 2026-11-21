@@ -22,8 +22,9 @@ review, and bounded fixes before a PR.
 flowchart TD
     A("Preflight branch,<br/>scope, and worktree") --> B("Run format, lint,<br/>types, and tests")
     B -->|Fail outside baseline| C(["Repair or stop"])
-    B -->|Pass| E{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/surgical-refactoring.md'>surgical-refactoring</a><br/>and consume decisions"}}
-    E --> G{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"}}
+    B -->|Pass| E{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/surgical-refactoring.md'>surgical-refactoring</a><br/>and consume candidates"}}
+    E --> F("Verify candidates, decide<br/>apply, keep, or approve;<br/>rerun gate and commit")
+    F --> G{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"}}
     G --> H{"Outcome"}
     H -->|No fix items| I(["Done"])
     H -->|Failure or approach escalation| J(["Stop and report"])
@@ -37,7 +38,7 @@ flowchart TD
     classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
     classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
-    class A,B,K,L stage;
+    class A,B,F,K,L stage;
     class E,G delegated;
     class I outcome;
     class C,J,M terminal;
@@ -55,7 +56,7 @@ internal decisions for that call.
 
 | When | Delegate to | Return used by this loop |
 | --- | --- | --- |
-| Simplification | [Surgical refactoring](surgical-refactoring.md) | Apply, keep, or needs-approval candidates |
+| Simplification | [Surgical refactoring](surgical-refactoring.md) | Candidates and caller-contract evidence; the parent loop decides apply, keep, or needs approval |
 | Initial and confirmation reviews | [Adversarial review](adversarial-review.md) | Fix, reject, defer, or escalate dispositions |
 
 ## Synthetic example output

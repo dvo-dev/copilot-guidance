@@ -26,27 +26,28 @@ flowchart TD
     B -->|Open draft| E("Reuse draft PR<br/>without editing its body")
     B -->|Open non-draft, closed,<br/>merged, or lookup error| Z(["Stop and hand off<br/>do not push"])
     D --> F("Request Copilot review")
-    E --> F
+    E --> P("Push local HEAD<br/>without force")
+    P --> F
     F --> G("Wait for review and CI")
     G --> H("Collect threads and overview findings")
     H --> I{{"Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"}}
     I --> J("Classify CI failures<br/>and rerun failed Actions once")
     J --> K{"Actionable item<br/>and cycle left?"}
     K -->|Yes| L("Test-first fix, gate,<br/>commit, and push")
-    L --> M("Reply and resolve<br/>adjudicated threads")
+    L --> M("Reply to adjudicated threads;<br/>resolve only addressed,<br/>rejected, or deferred findings")
     K -->|No| M
     M --> N{"New push and<br/>cycle left?"}
     N -->|No push or stop| O(["Post or update<br/>human handoff summary"])
     N -->|Push, cycles remain| F
-    N -->|Push, cap reached| P("Request final review<br/>without waiting")
-    P --> O
+    N -->|Push, cap reached| Q("Request final review<br/>without waiting")
+    Q --> O
 
     classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
     classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
     classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
     classDef terminal fill:#16161e,stroke:#565f89,stroke-width:1px,color:#c0caf5;
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
-    class A,D,E,F,G,H,J,L,M,P stage;
+    class A,D,E,F,G,H,J,L,M,P,Q stage;
     class C,I delegated;
     class O outcome;
     class Z terminal;
@@ -87,8 +88,9 @@ judgment.
 | C1.2 | Rejected | Reusing the posting adapter from invoice preview would change a read-only path. Focused tests show preview must stay write-free. |
 | C1.3 | Deferred | A cached ledger balance remains a follow-up because there is no load evidence for it. |
 
-**CI:** green. One failed run passed after a single rerun and was recorded as a
-flake.
+**CI:** The reviewed head was green after one failed run passed on rerun and
+was recorded as a flake. The final push's CI check was not awaited and remains
+`unknown (not awaited)`.
 
 **Needs human judgment**
 

@@ -14,7 +14,7 @@ supporting detail.
 ```mermaid
 %%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
 flowchart TD
-    A["Read diff, intent,<br/>facts, and repository template"] --> B["Invoke <a href='visual-explanations.md'>visual-explanations</a><br/>and consume the result"]
+    A["Read diff, intent,<br/>facts, and repository template"] --> B["Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>and consume the result"]
     B --> C["Write effect-focused summary"]
     C --> D["Add one main flow diagram"]
     D --> E["Add business cases<br/>when inputs differ"]

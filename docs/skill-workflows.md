@@ -26,28 +26,28 @@ flowchart TD
     NEED["Person: business intent<br/>or desired behavior change"]
 
     subgraph SHAPE["Meat proxy: shape technical intent"]
-        VISUAL["<a href='skill-workflows/visual-explanations.md'>visual-explanations</a><br/>make paths and tradeoffs readable"]
-        REUSE["<a href='skill-workflows/surgical-refactoring.md'>surgical-refactoring</a><br/>reuse existing scaffolding and contracts"]
+        VISUAL["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>make paths and tradeoffs readable"]
+        REUSE["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/surgical-refactoring.md'>surgical-refactoring</a><br/>reuse existing scaffolding and contracts"]
         TECH["Human-readable technical intent<br/>assumptions, reuse, and open choices"]
     end
 
     NEED --> VISUAL --> TECH
     NEED --> REUSE --> TECH
     TECH --> TEACH{"Need a teaching pass?"}
-    TEACH -->|Yes| WALK["Optional: <a href='skill-workflows/plan-walkthrough-quiz.md'>plan-walkthrough-quiz</a>"]
+    TEACH -->|Yes| WALK["Optional: <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/plan-walkthrough-quiz.md'>plan-walkthrough-quiz</a>"]
     TEACH -->|No| APPROVE["Person approves plan"]
     WALK --> APPROVE
 
     subgraph FACTORY["Current automated factory"]
-        PLAN["<a href='../skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"]
+        PLAN["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"]
         INTAKE["1. Intake<br/>read plan, lock branch,<br/>resolve scope and settings"]
-        REVIEW["2. Plan review<br/>invoke <a href='skill-workflows/adversarial-review.md'>adversarial-review</a>"]
+        REVIEW["2. Plan review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/adversarial-review.md'>adversarial-review</a>"]
         BUILD["3. Implement<br/>todos, tests, and commits"]
         GATEA["4. Gate A<br/>deterministic checks"]
-        LOCAL["5. Local review<br/>invoke <a href='skill-workflows/review-fix-loop.md'>review-fix-loop</a>"]
+        LOCAL["5. Local review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/review-fix-loop.md'>review-fix-loop</a>"]
         GATEB["6. Gate B<br/>continue, report, or stop"]
-        PR["7. Draft PR review<br/>invoke <a href='skill-workflows/copilot-review-loop.md'>copilot-review-loop</a>"]
-        DESC["<a href='skill-workflows/pr-descriptions.md'>pr-descriptions</a><br/>expose decisions, risks,<br/>tradeoffs, and required steps"]
+        PR["7. Draft PR review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/copilot-review-loop.md'>copilot-review-loop</a>"]
+        DESC["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a><br/>expose decisions, risks,<br/>tradeoffs, and required steps"]
         HANDOFF["8. Handoff<br/>draft PR and decision packet"]
 
         PLAN --> INTAKE --> REVIEW --> BUILD
@@ -57,8 +57,8 @@ flowchart TD
     APPROVE --> PLAN
 
     subgraph REVIEWPR["Meat proxy: understand and judge the draft PR"]
-        FLOW["<a href='skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"]
-        ANNOTATE["<a href='skill-workflows/pr-annotations.md'>pr-annotations</a><br/>expose behavior impact<br/>and decision choices"]
+        FLOW["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"]
+        ANNOTATE["<a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/pr-annotations.md'>pr-annotations</a><br/>expose behavior impact<br/>and decision choices"]
         CHOICES["Decision choices exposed<br/>accept, adjust, defer, or enforce"]
         HUMAN{"Human reviewer:<br/>push back, defer,<br/>enforce, or accept?"}
     end
@@ -70,7 +70,7 @@ flowchart TD
     HUMAN -->|adjustment needed| REWORK["Manual revision<br/>to intent, plan, or code"]
     REWORK -.-> PLAN
     HUMAN -->|ready| MERGED["Person merges PR"]
-    MERGED --> REFINE["Post-merge: <a href='skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"]
+    MERGED --> REFINE["Post-merge: <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"]
 ```
 
 Plan review and local hardening are delegation boundaries. Their own pages show

@@ -21,7 +21,7 @@ flowchart TD
     D -->|No| F["Full mode<br/>compare merge base to head"]
     E --> G["Select at most six<br/>behavioral production segments"]
     F --> G
-    G --> H["Apply <a href='visual-explanations.md'>visual-explanations</a><br/>trace and consume the result"]
+    G --> H["Apply <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>trace and consume the result"]
     H --> I["Classify concern<br/>and state stated or inferred why"]
     I --> J["Draft overview and inline notes"]
     J --> K{"Head still unchanged?"}

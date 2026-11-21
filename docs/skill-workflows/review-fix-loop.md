@@ -16,8 +16,8 @@ review, and bounded fixes before a PR.
 flowchart TD
     A["Preflight branch,<br/>scope, and worktree"] --> B["Run format, lint,<br/>types, and tests"]
     B -->|Fail outside baseline| C["Repair or stop"]
-    B -->|Pass| E["Invoke <a href='surgical-refactoring.md'>surgical-refactoring</a><br/>and consume decisions"]
-    E --> G["Invoke <a href='adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"]
+    B -->|Pass| E["Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/surgical-refactoring.md'>surgical-refactoring</a><br/>and consume decisions"]
+    E --> G["Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"]
     G --> H{"Outcome"}
     H -->|No fix items| I["Done"]
     H -->|Failure or approach escalation| J["Stop and report"]

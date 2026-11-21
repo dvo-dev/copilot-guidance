@@ -17,7 +17,7 @@ flowchart TD
     B --> C["Teach ELI5 goal<br/>milestones, analogy, and persona"]
     C --> D["Walk through<br/>each implementation task"]
     D --> V{"Diagram needed?"}
-    V -->|Yes| X["Invoke <a href='visual-explanations.md'>visual-explanations</a><br/>for this task"]
+    V -->|Yes| X["Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>for this task"]
     X --> E["Ask one scenario question"]
     V -->|No| E
     E --> F{"Correct?"}

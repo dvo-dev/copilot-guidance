@@ -18,7 +18,7 @@ flowchart TD
     C --> D["Show overview map,<br/>scenario, and starting state"]
     D --> E["Show one segment:<br/>chain, excerpt, state, and sources"]
     E --> V{"Focused branch or<br/>outcome comparison?"}
-    V -->|Yes| X["Invoke <a href='visual-explanations.md'>visual-explanations</a><br/>for this decision"]
+    V -->|Yes| X["Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/visual-explanations.md'>visual-explanations</a><br/>for this decision"]
     X --> F{"User chooses next?"}
     V -->|No| F
     F -->|Next segment| E

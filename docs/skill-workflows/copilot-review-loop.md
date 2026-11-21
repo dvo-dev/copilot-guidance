@@ -15,13 +15,13 @@ progress visible, then stops when human or concurrent work needs ownership.
 %%{init: {"theme":"base","themeVariables":{"background":"#1a1b26","primaryColor":"#24283b","primaryTextColor":"#c0caf5","primaryBorderColor":"#7aa2f7","secondaryColor":"#1f2335","secondaryTextColor":"#c0caf5","secondaryBorderColor":"#bb9af7","tertiaryColor":"#16161e","tertiaryTextColor":"#c0caf5","tertiaryBorderColor":"#7dcfff","lineColor":"#7dcfff","textColor":"#c0caf5","mainBkg":"#24283b","nodeBorder":"#7aa2f7","clusterBkg":"#16161e","clusterBorder":"#565f89","defaultLinkColor":"#7dcfff","edgeLabelBackground":"#1a1b26","titleColor":"#bb9af7","fontFamily":"ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"},"flowchart":{"curve":"basis","htmlLabels":true}}}%%
 flowchart TD
     A["Check clean branch,<br/>green gates, scope, and gh access"] --> B{"Existing open<br/>draft PR?"}
-    B -->|No| C["Push, then invoke<br/><a href='pr-descriptions.md'>pr-descriptions</a>"]
+    B -->|No| C["Push, then invoke<br/><a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a>"]
     B -->|Yes| D["Reuse draft PR<br/>without editing its body"]
     C --> E["Request Copilot review"]
     D --> E
     E --> F["Wait for review and CI"]
     F --> G["Collect threads and overview findings"]
-    G --> H["Invoke <a href='adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"]
+    G --> H["Invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/dvo-dev-document-dev-flows/docs/skill-workflows/adversarial-review.md'>adversarial-review</a><br/>and consume dispositions"]
     H --> I["Classify CI failures<br/>and rerun failed Actions once"]
     I --> J{"Actionable item<br/>and cycle left?"}
     J -->|Yes| K["Test-first fix, gate,<br/>commit, and push"]

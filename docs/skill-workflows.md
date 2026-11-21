@@ -44,8 +44,7 @@ flowchart TD
     TECH --> APPROVE(["Person approves plan"])
     WALK --> APPROVE
 
-    subgraph FACTORY["Current automated factory"]
-        PLAN{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/skills/plan-to-pr/SKILL.md'>plan-to-pr</a> coordinator<br/>owns the complete pipeline"}}
+    subgraph FACTORY["plan-to-pr: current automated factory"]
         INTAKE("1. Intake<br/>check branch, worktree,<br/>and run lock")
         REVIEW{{"2. Plan review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/adversarial-review.md'>adversarial-review</a>"}}
         BUILD("3. Implement<br/>todos, tests, and commits")
@@ -54,26 +53,13 @@ flowchart TD
         GATEB("6. Gate B<br/>assess local review result")
         PR{{"7. Draft PR review<br/>invoke <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/copilot-review-loop.md'>copilot-review-loop</a>"}}
         DESC{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/pr-descriptions.md'>pr-descriptions</a><br/>expose decisions, risks,<br/>tradeoffs, and required steps"}}
-        STOPB(["Stop<br/>no pull request"])
         HANDOFF("8. Handoff<br/>draft PR and decision packet")
 
-        PLAN --> INTAKE
-        INTAKE -->|clear| REVIEW
-        INTAKE -->|blocked: lock held,<br/>dirty tree, or setup| STOPB
-        REVIEW -->|review clear| BUILD
-        REVIEW -->|review failure| STOPB
-        BUILD --> GATEA
-        GATEA -->|checks pass| LOCAL --> GATEB
-        GATEA -->|failed after repair| STOPB
-        GATEB -->|continue| PR --> HANDOFF
-        GATEB -->|gate or review failure| STOPB
-        GATEB -.->|approach escalation:<br/>reapprove| APPROVE
         PR -->|new draft: invoke| DESC
+        INTAKE ==> REVIEW ==> BUILD ==> GATEA ==> LOCAL ==> GATEB ==> PR ==> HANDOFF
     end
 
-    APPROVE --> PLAN
-    REVIEW -.->|scope change:<br/>reapprove| APPROVE
-    BUILD -.->|scope change: reapprove| APPROVE
+    APPROVE ==>|start <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/skills/plan-to-pr/SKILL.md'>plan-to-pr</a>| INTAKE
 
     subgraph REVIEWPR["Meat proxy: understand and judge the draft PR"]
         FLOW{{"<a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/code-flow-walkthrough.md'>code-flow-walkthrough</a><br/>trace generated-code intent by segment"}}
@@ -89,9 +75,9 @@ flowchart TD
     DESC -.->|data feed: decisions and risks| CHOICES
     CHOICES --> HUMAN
     HUMAN -->|ready| MERGED(["Person merges PR"])
-    HUMAN -.->|in-scope adjustment| PLAN
-    HUMAN -.->|scope or policy change:<br/>reapprove| APPROVE
     MERGED -.->|manual: guidance improvement| REFINE{{"Post-merge: <a href='https://github.com/dvo-dev/copilot-guidance/blob/main/docs/skill-workflows/refine-agent-guidance.md'>refine-agent-guidance</a><br/>manual evidence-driven improvement"}}
+    HUMAN -->|in-scope adjustment| RERUN(["Rerun plan-to-pr"])
+    HUMAN -->|scope or policy change| REAPPROVE(["Revise and reapprove plan"])
 
     classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
     classDef delegated fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
@@ -101,15 +87,18 @@ flowchart TD
     classDef decision fill:#16161e,stroke:#7dcfff,stroke-width:1.5px,color:#c0caf5;
     classDef optional fill:#16161e,stroke:#565f89,stroke-width:1px,color:#a9b1d6,stroke-dasharray:4 3;
     class TECH,INTAKE,BUILD,GATEA,GATEB,HANDOFF,CHOICES stage;
-    class VISUAL,REUSE,WALK,PLAN,REVIEW,LOCAL,PR,DESC,FLOW,ANNOTATE,REFINE delegated;
-    class NEED,APPROVE,MERGED human;
+    class VISUAL,REUSE,WALK,REVIEW,LOCAL,PR,DESC,FLOW,ANNOTATE,REFINE delegated;
+    class NEED,APPROVE,MERGED,RERUN,REAPPROVE human;
     class HUMAN decision;
-    class STOPB terminal;
 
     style SHAPE fill:#14151f,stroke:#565f89,stroke-width:1px,color:#bb9af7;
     style FACTORY fill:#16161e,stroke:#7aa2f7,stroke-width:1.5px,color:#c0caf5;
     style REVIEWPR fill:#14151f,stroke:#bb9af7,stroke-width:1px,color:#bb9af7;
 ```
+
+The diagram shows the path that reaches a pull request. Intake, plan review,
+implementation, Gate A, and Gate B can each stop the run first. Then the run
+opens no pull request: it reports the blocker or asks to reapprove the plan.
 
 Plan review and local hardening are delegation boundaries. Their own pages show
 the branches and fix cycles used inside those calls.

@@ -179,6 +179,7 @@ not unlimited autonomous work.
 | Intent | A person still defines product intent, scope, plan, and initial approval. |
 | Environment | Missing credentials, unavailable tooling, and unsupported repository state can block intake or checks. |
 | Decisions | In-scope choices can continue on autopilot when they are recorded. Scope and policy changes still require a new decision. |
+| Manual QA | Add a hands-on check alongside unit tests: a person tries the changed workflow and compares what they see with the acceptance criteria. For a web UI, replay the same steps in a headless browser with Playwright, record a short video with FFmpeg, and link it from the draft PR so reviewers can see the behavior. |
 | Generated-code comprehension | A post-draft walkthrough is currently manual. The walkthrough helps locate segment-level disagreement, but `plan-to-pr` does not automatically turn that feedback into a new implementation pass. |
 | Review limits | Valid work can remain when a fix-cycle cap is reached. The factory needs a durable queue for unfinished work. |
 | Delivery | The final review after the last push is not awaited. Readiness, merge, deployment, and rollback remain manual. |

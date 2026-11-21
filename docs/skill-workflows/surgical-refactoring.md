@@ -62,9 +62,7 @@ flowchart LR
 
     classDef stage fill:#24283b,stroke:#7aa2f7,stroke-width:1px,color:#c0caf5;
     classDef outcome fill:#1f2335,stroke:#9ece6a,stroke-width:1.5px,color:#c0caf5;
-    classDef human fill:#1f2335,stroke:#bb9af7,stroke-width:1.5px,color:#c0caf5;
-    class CORE stage;
-    class PREVIEW,POST human;
+    class CORE,PREVIEW,POST stage;
     class PREVIEWR,POSTR outcome;
 ```
 
